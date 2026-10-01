@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BACKROOMS — Organized Survival FPS</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0a0903;color:#e8dfc0;font-family:monospace;text-align:left;overflow:hidden}
+#app{position:fixed;inset:0}
+#c3d{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;pointer-events:none;z-index:5}
+#cross{left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;color:#fff8;pointer-events:none}
+#top{top:0;left:0;right:0;display:flex;gap:8px;padding:8px;align-items:center;background:linear-gradient(#000c,#0000)}
+.bar{width:120px;height:10px;background:#222;border:1px solid #665;border-radius:5px;overflow:hidden}.bar>i{display:block;height:100%}
+.tag{font-size:11px;background:#000a;border:1px solid #665;padding:3px 8px;border-radius:12px}
+#lvlTag{color:#ffe9a3;border-color:#a90}
+#warn{top:46px;left:50%;transform:translateX(-50%);color:#ff4444;font-weight:700;display:none;animation:bl 0.5s infinite alternate}
+@keyframes bl{to{opacity:.4}}
+#hot{bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto}
+.slot{width:64px;height:56px;background:#111c;border:1px solid #665;border-radius:8px;text-align:center;font-size:10px;padding:3px;cursor:pointer}
+.slot.sel{border-color:#ffdf6b;box-shadow:0 0 8px #ffdf6b}.slot b{font-size:18px;display:block}
+#map{position:absolute;right:8px;top:46px;z-index:5;border:1px solid #665;border-radius:8px;background:#000b}
+#msg{bottom:78px;left:50%;transform:translateX(-50%);background:#000d;padding:6px 14px;border-radius:8px;border:1px solid #665;font-size:13px;display:none}
+#vig{position:absolute;inset:0;pointer-events:none;z-index:4;box-shadow:inset 0 0 120px #000;transition:box-shadow .3s}
+#menu{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#2a2410,#050400f2);overflow:auto;padding:16px}
+.panel{max-width:860px;width:100%;background:#14110a;border:2px solid #c9a227;border-radius:12px;padding:18px}
+.panel h1{margin:0;letter-spacing:3px;color:#ffe9a3}.panel h1 small{font-size:12px;color:#aaa}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button{background:#221d10;border:1px solid #665;color:#e8dfc0;padding:8px 12px;border-radius:8px;cursor:pointer;font-family:inherit}
+.tabs button.on{background:#c9a227;color:#111;font-weight:700}
+.codex{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;max-height:300px;overflow:auto}
+.cardx{background:#0d0b06;border:1px solid #554;padding:8px;border-radius:8px;font-size:12px;line-height:1.5}
+.cardx b{color:#ffe9a3}.cardx i{color:#8f8}
+.btn{background:#c9a227;border:0;border-radius:8px;padding:12px 18px;font-weight:700;cursor:pointer;font-family:inherit;margin:4px}
+.btn.g{background:none;border:1px solid #c9a227;color:#c9a227}
+.rowflex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+pre.git{background:#000;border:1px solid #444;border-radius:8px;padding:10px;font-size:11px;overflow:auto;white-space:pre-wrap}
+#load{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:#000e;font-size:18px}
+#stick{position:absolute;left:14px;bottom:76px;width:110px;height:110px;border:2px solid #fff5;border-radius:50%;z-index:6;display:none;touch-action:none}
+#nub{position:absolute;left:35px;top:35px;width:40px;height:40px;background:#fff5;border-radius:50%}
+#atkBtn{position:absolute;right:16px;bottom:86px;width:76px;height:76px;border-radius:50%;z-index:6;display:none;background:#c9a22788;border:2px solid #fff;font-size:28px}
+@media(pointer:coarse){#stick,#atkBtn{display:block}}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="c3d"></canvas>
+<div id="vig"></div>
+<div class="hud" id="cross">+</div>
+<div class="hud" id="top"><span class="tag" id="lvlTag">LEVEL 0</span><span class="tag">❤ <span class="bar" style="display:inline-block;vertical-align:middle"><i id="hpB" style="background:#e33;width:100%"></i></span></span><span class="tag">⚡<span class="bar" style="display:inline-block;vertical-align:middle"><i id="stB" style="background:#3c3;width:100%"></i></span></span><span class="tag">🧠<span class="bar" style="display:inline-block;vertical-align:middle"><i id="saB" style="background:#4af;width:100%"></i></span></span><span class="tag" id="objTag">◈ find exit</span></div>
+<div class="hud" id="warn">⚠ ENTITY NEAR ⚠</div>
+<canvas id="map" width="132" height="132"></canvas>
+<div class="hud" id="msg"></div>
+<div class="hud" id="hot"></div>
+<div id="stick"><div id="nub"></div></div>
+<button id="atkBtn">⚔</button>
+<div id="menu"><div class="panel">
+<h1>◈ BACKROOMS <small>v1.1 — organized src/ project</small></h1>
+<div style="font-size:12px;opacity:.8">Tutorial + 15 levels · 15 entities · 22 items · 12 weapons · crafting + journal + tapes. New here? Play the tutorial first — its items stay in training.</div>
+<div class="tabs" id="tabRow">
+<button data-t="play" class="on">▶ PLAY</button><button data-t="levels">LEVELS</button><button data-t="entities">ENTITIES</button><button data-t="items">ITEMS</button><button data-t="weapons">WEAPONS</button><button data-t="github">GITHUB STEPS</button>
+</div>
+<div id="tabBody"></div>
+<div class="rowflex" style="margin-top:10px"><button class="btn" id="playBtn">ENTER TUTORIAL</button><select id="lvlSel" style="padding:11px;border-radius:8px;background:#000;color:#fff;border:1px solid #665"></select><button class="btn g" id="helpBtn">HOW TO PLAY</button><button class="btn g" onclick="window.toggleCraft&&toggleCraft()">🔨 CRAFT</button><button class="btn g" onclick="window.showJournal&&showJournal()">📓 JOURNAL</button></div>
+</div></div>
+<div id="load">noclipping…</div>
+</div>
+<!-- multiplayer needs perchance hosting (server-plugin); this export runs offline single-player -->
+<script type="module" src="src/main.js"></script>
+
+<script type="module">
+// vfs:data.js
+var LEVELS = [
+  { id: "T", name: "Tutorial \u2014 How To Noclip", sub: "small training room, no risk", wall: 12100698, floor: 9074248, ceil: 13352319, fog: 1314819, fogD: 26, size: 5, entity: "bacteria", loot: ["almond_water", "energy_bar", "batteries", "crowbar"], exit: "training_door", tip: "WASD move \xB7 E grab \xB7 Click attack \xB7 Reach exit. Nothing you grab here leaves with you.", bright: 1, tutorial: true },
+  { id: 0, name: "Level 0 \u2014 The Lobby", sub: "mono-yellow, humming fluorescents", wall: 12100698, floor: 9074248, ceil: 13352319, fog: 1314819, fogD: 26, size: 21, entity: "bacteria", loot: ["almond_water", "energy_bar", "batteries", "flashlight", "crowbar"], exit: "stair", tip: "Find the stairwell. Almond water stops sanity drain.", bright: 1 },
+  { id: 1, name: "Level 1 \u2014 Concrete Garage", sub: "fog, concrete, entity dogs", wall: 7039851, floor: 4013373, ceil: 5592405, fog: 657930, fogD: 30, size: 23, entity: "hound", loot: ["almond_water", "bandage", "pipe_wrench", "batteries", "keycard_l1"], exit: "garage_door", tip: "Hounds hear sprinting. Walk when close.", bright: 0.8 },
+  { id: 2, name: "Level 2 \u2014 Pipe Dreams", sub: "hot service tunnels", wall: 5917242, floor: 3814186, ceil: 4866616, fog: 854019, fogD: 24, size: 23, entity: "dullers", loot: ["almond_water", "machete", "fuse", "lantern"], exit: "pipe_exit", tip: "Collect 2 FUSES to power the exit door.", bright: 0.7, needFuse: 2 },
+  { id: 3, name: "Level 3 \u2014 Electrical Station", sub: "dark + smilers in wires", wall: 3817290, floor: 2237482, ceil: 2895414, fog: 197380, fogD: 18, size: 25, entity: "smiler", loot: ["batteries", "lantern", "stun_lantern", "almond_water", "fuse"], exit: "breaker", tip: "Smilers fear light. Keep flashlight ON.", bright: 0.45, needFuse: 2 },
+  { id: 4, name: "Level 4 \u2014 Abandoned Office", sub: "cubicles, facelings roam", wall: 8026738, floor: 4868676, ceil: 10132110, fog: 789512, fogD: 28, size: 23, entity: "clumps", loot: ["energy_bar", "bandage", "fire_axe", "tape", "keycard_l2"], exit: "office_exit", tip: "Clumps sleep unless touched. Crouch-walk around.", bright: 0.75 },
+  { id: 5, name: "Level 5 \u2014 Terror Hotel", sub: "carpet, doors, skin-stealers", wall: 6957610, floor: 3807770, ceil: 8018490, fog: 852739, fogD: 22, size: 25, entity: "skinstealer", loot: ["almond_water", "repellent", "machete", "keycard_l2"], exit: "room_403", tip: "Check doors. One room-403 key glows gold.", bright: 0.6 },
+  { id: 6, name: "Level 6 \u2014 Lights Out", sub: "pitch black, partygoers", wall: 1118481, floor: 657930, ceil: 328965, fog: 0, fogD: 11, size: 21, entity: "party", loot: ["lantern", "batteries", "almond_darts", "radio"], exit: "slide", tip: "No sprint. Listen for balloons. Light = life.", bright: 0.22 },
+  { id: 7, name: "Level 7 \u2014 Poolrooms", sub: "tile + water, death moths", wall: 10148840, floor: 4889264, ceil: 14218495, fog: 401964, fogD: 32, size: 25, entity: "moths", loot: ["almond_water", "bandage", "lucky_coin", "energy_bar"], exit: "pool_hole", tip: "Moths guard the deep hole. Throw repellent (use item).", bright: 1.1 },
+  { id: 8, name: "Level ! \u2014 Run For Your Life", sub: "!", wall: 12591136, floor: 2236962, ceil: 3346705, fog: 851968, fogD: 24, size: 27, entity: "party", loot: ["energy_bar", "almond_water", "fire_axe", "coffee", "medkit"], exit: "final_door", tip: "RUN. No fighting. Reach the white door.", bright: 0.6 },
+  { id: 9, name: "Level 9 \u2014 Darkrooms", sub: "pure black suburb", wall: 1710618, floor: 855309, ceil: 0, fog: 0, fogD: 10, size: 25, entity: "shadow", loot: ["nightvision", "batteries", "compass", "katana", "coffee"], exit: "lamp_post", tip: "Shadow copies your moves. Nightvision + never stop.", bright: 0.18 },
+  { id: 10, name: "Level Fun \u2014 Party Room", sub: "=) cake and balloons", wall: 16765773, floor: 9071130, ceil: 16773280, fog: 854016, fogD: 22, size: 25, entity: "party", loot: ["repellent", "shotgun", "medkit", "radio", "almond_water"], exit: "cake_door", tip: "2 Partygoers. Shotgun + repellent. Aim for the cake.", bright: 0.8, double: true },
+  { id: 11, name: "Level 33 \u2014 Endless Metro", sub: "tunnels + windows", wall: 3820090, floor: 2763306, ceil: 2236962, fog: 132611, fogD: 20, size: 27, entity: "window", loot: ["nailgun", "batteries", "fuse", "compass", "coffee"], exit: "last_train", tip: "Window Entity lives in glass. 3 FUSES. Don't look at windows.", bright: 0.4, needFuse: 3 },
+  { id: 12, name: "Level 94 \u2014 Motion", sub: "endless white halls that move", wall: 14211280, floor: 11579560, ceil: 16777215, fog: 1118216, fogD: 30, size: 25, entity: "wretch", loot: ["adrenaline", "bandage", "spear", "duct_tape", "compass"], exit: "still_door", tip: "The halls drift. Wretches track motion \u2014 stand still to vanish.", bright: 0.9 },
+  { id: 13, name: "Level 37 \u2014 Sermon", sub: "drowned chapel + static", wall: 2763322, floor: 1315872, ceil: 1710634, fog: 197384, fogD: 16, size: 25, entity: "static", loot: ["crossbow", "batteries", "duct_tape", "medkit", "tape"], exit: "pulpit", tip: "Static hunts by flashlight. Go dark, use nightvision.", bright: 0.3, needFuse: 1 },
+  { id: 14, name: "Level 188 \u2014 Tiled Baths", sub: "steam, stalls, knocking", wall: 8040624, floor: 3828330, ceil: 12642536, fog: 267284, fogD: 24, size: 23, entity: "clumps", loot: ["spear", "repellent", "adrenaline", "jacket", "almond_water"], exit: "drain", tip: "Knocking means clumps. Throw radio, slip past.", bright: 0.7 }
+];
+var ENTITIES = {
+  bacteria: { name: "Bacteria", icon: "\u{1F9A0}", hp: 60, speed: 3.1, dmg: 12, color: 10133640, weak: "almond", desc: "Wired humanoid. Warded by almond smell. Melee it with crowbar+.", quote: "It clicks before it sprints." },
+  hound: { name: "Hound", icon: "\u{1F43A}", hp: 80, speed: 4.2, dmg: 18, color: 5592416, weak: "walk", desc: "Dog-humanoid. Runs to sound. Walk (no SHIFT) to stay hidden.", quote: "Don't run. It hears you." },
+  smiler: { name: "Smiler", icon: "\u{1F601}", hp: 100, speed: 3.8, dmg: 25, color: 16777215, weak: "light", desc: "Grinning teeth in dark. Flashlight freezes it. Attack only in light.", quote: "It smiles because you looked." },
+  dullers: { name: "Dullers", icon: "\u{1F6AA}", hp: 50, speed: 2.6, dmg: 10, color: 7829316, weak: "none", desc: "Gray office drones. Slow but swarm in pairs.", quote: "They clock in. You clock out." },
+  clumps: { name: "Clumps", icon: "\u{1F932}", hp: 70, speed: 2.2, dmg: 20, color: 13408614, weak: "quiet", desc: "Sleeping arm-balls. Step on hands = wake. Throw radio to distract.", quote: "Shh. Step over the arms." },
+  skinstealer: { name: "Skin-Stealer", icon: "\u{1F9E5}", hp: 120, speed: 3.4, dmg: 22, color: 11176038, weak: "repellent", desc: "Wears skins. Repellent burns it. Check doors fast.", quote: "Is that blood on its cuffs?" },
+  party: { name: "Partygoers =)", icon: "\u{1F388}", hp: 140, speed: 4.6, dmg: 30, color: 16763955, weak: "none", desc: "Yellow smile-bags. No mercy on Level !. Just run.", quote: "=) let's party =)" },
+  moths: { name: "Death Moths", icon: "\u{1F98B}", hp: 40, speed: 3, dmg: 8, color: 13412966, weak: "light", desc: "Flutter swarm. Light scatters them. Almond darts one-shot.", quote: "Dust burns. Stay in light." },
+  faceling: { name: "Facelings", icon: "\u{1F9D2}", hp: 999, speed: 2, dmg: 0, color: 16764057, weak: "none", desc: "Friendly kid-entities. Trade tapes for almond water.", quote: "Have you seen my dog?" },
+  shadow: { name: "Shadow Figure", icon: "\u{1F464}", hp: 90, speed: 4, dmg: 20, color: 0, weak: "nightvision", desc: "Copies your last move. Nightvision reveals it. Keep moving.", quote: "It stands where you stood." },
+  window: { name: "Window Entity", icon: "\u{1FA9F}", hp: 110, speed: 3.6, dmg: 24, color: 8965375, weak: "light", desc: "Lives in reflections. Light burns it. Sprint between cars.", quote: "Don't look at the glass." },
+  guide: { name: "The Guide", icon: "\u{1F9D9}", hp: 999, speed: 2, dmg: 0, color: 6750105, weak: "none", desc: "Rare friend. Points to the exit. Follow the green glow.", quote: "This way. Quickly." },
+  wretch: { name: "Wretch", icon: "\u{1FAE0}", hp: 90, speed: 3.2, dmg: 16, color: 14209216, weak: "still", desc: "Melting crawler. Only sees movement. Stand still to break chase.", quote: "It stops when you stop." },
+  static: { name: "Static Saint", icon: "\u{1F4FA}", hp: 130, speed: 3.9, dmg: 26, color: 4474111, weak: "dark", desc: "Chapel preacher. Hunts flashlight beams. Go dark.", quote: "CAN YOU HEAR THE SERMON." },
+  boss: { name: "Mama Party", icon: "\u{1F479}", hp: 600, speed: 3, dmg: 35, color: 16724736, weak: "shotgun", desc: "Level ! boss. Spawns Partygoers. Shotgun + repellent.", quote: "JOIN US =)" }
+};
+var ITEMS = {
+  almond_water: { name: "Almond Water", icon: "\u{1F9F4}", type: "heal", heal: 45, use: "+45 HP + sanity. Burns bacteria.", desc: "Smells like almonds. Entities hate it." },
+  energy_bar: { name: "Energy Bar", icon: "\u{1F36B}", type: "stam", heal: 60, use: "+60 stamina, +10 HP.", desc: "Stale but keeps you sprinting." },
+  flashlight: { name: "Flashlight", icon: "\u{1F526}", type: "tool", use: "Toggle F. Freezes Smilers/Moths. Needs batteries.", desc: "Your best weapon is light." },
+  batteries: { name: "Batteries", icon: "\u{1F50B}", type: "ammo", use: "Restores flashlight 100%.", desc: "AA. Currency of the dark." },
+  bandage: { name: "Bandage", icon: "\u{1FA79}", type: "heal", heal: 30, use: "+30 HP instantly.", desc: "Stops bleeding fast." },
+  lantern: { name: "Lantern", icon: "\u{1F3EE}", type: "tool", use: "Big passive light ring.", desc: "Heavy but safe sleep." },
+  keycard_l1: { name: "Keycard L1", icon: "\u{1FAAA}", type: "key", use: "Opens L1 doors (Lv1, Lv4).", desc: "Someone's badge. Still warm." },
+  keycard_l2: { name: "Keycard L2", icon: "\u{1F4B3}", type: "key", use: "Opens L2 doors (Lv5).", desc: "Blue stripe. Higher clearance." },
+  fuse: { name: "Fuse", icon: "\u{1F50C}", type: "quest", use: "Power exit doors (Lv2, Lv3).", desc: "15A. Don't lick." },
+  tape: { name: "VHS Tape", icon: "\u{1F4FC}", type: "quest", use: "Trade to Facelings / lore.", desc: "'HOW TO EXIT' written in marker." },
+  repellent: { name: "Entity Repellent", icon: "\u{1F9EA}", type: "throw", use: "Press 1-4 select + LMB: burns chaser.", desc: "Almond concentrate + iron." },
+  radio: { name: "Radio", icon: "\u{1F4FB}", type: "throw", use: "LMB throws: noise lure 15s.", desc: "Still plays a birthday song." },
+  lucky_coin: { name: "Lucky Coin", icon: "\u{1FA99}", type: "buff", use: "Passive: -30% entity damage.", desc: "Heads. Always heads." },
+  crowbar: { name: "Crowbar", icon: "\u{1FA8F}", type: "weapon", desc: "Starter melee. Quiet." },
+  pipe_wrench: { name: "Pipe Wrench", icon: "\u{1F527}", type: "weapon", desc: "Heavy pipe tool." },
+  machete: { name: "Machete", icon: "\u{1F52A}", type: "weapon", desc: "Fast bleed blade." },
+  fire_axe: { name: "Fire Axe", icon: "\u{1FA93}", type: "weapon", desc: "Slow, huge damage." },
+  almond_darts: { name: "Almond Darts", icon: "\u{1F3AF}", type: "weapon", desc: "Ranged almond bolts." },
+  stun_lantern: { name: "Stun Lantern", icon: "\u{1F4A1}", type: "weapon", desc: "Flash burst stuns 5s." },
+  coffee: { name: "Coffee", icon: "\u2615", type: "stam", heal: 30, use: "+30 stamina + SPEED 20s.", desc: "Hot. Somehow still hot." },
+  medkit: { name: "Medkit", icon: "\u{1F48A}", type: "heal", heal: 80, use: "+80 HP full restore.", desc: "Smells like Poolrooms." },
+  compass: { name: "Compass", icon: "\u{1F9ED}", type: "buff", use: "Passive: arrow points to exit.", desc: "Spins near entities." },
+  nightvision: { name: "Night Vision", icon: "\u{1F97D}", type: "tool", use: "Passive: see in dark + reveal Shadow.", desc: "Green glow. Battery-free." },
+  katana: { name: "Katana", icon: "\u{1F5E1}\uFE0F", type: "weapon", desc: "Very fast, long blade." },
+  nailgun: { name: "Nailgun", icon: "\u{1F52B}", type: "weapon", desc: "Ranged nails. Uses batteries." },
+  shotgun: { name: "Almond Shotgun", icon: "\u{1F4A5}", type: "weapon", desc: "Spread blast. Devastating close." },
+  backcoin: { name: "Backcoin", icon: "\u{1FA99}", type: "coin", use: "+1 Backcoin. Traders in safe rooms take them.", desc: "Stamped bottleneck cap. Real money here." },
+  adrenaline: { name: "Adrenaline", icon: "\u{1F489}", type: "stam", heal: 100, use: "+100 stamina, +25 HP, speed 20s.", desc: "Military stim. Burns bright." },
+  duct_tape: { name: "Duct Tape", icon: "\u{1FA79}", type: "tool", use: "Crafting glue. Keep 2+.", desc: "Fixes everything, even spears." },
+  jacket: { name: "Taped Jacket", icon: "\u{1F9E5}", type: "buff", use: "Passive: -40% damage.", desc: "Layers of tape and carpet." },
+  spear: { name: "Scrap Spear", icon: "\u{1F9AF}", type: "weapon", desc: "Long reach. Quiet." },
+  crossbow: { name: "Crossbow", icon: "\u{1F3F9}", type: "weapon", desc: "Silent bolts. Long range." }
+};
+var WEAPONS = {
+  fists: { name: "Fists", icon: "\u{1F44A}", dmg: 8, range: 2.2, cd: 0.45, desc: "Always with you." },
+  crowbar: { name: "Crowbar", icon: "\u{1FA8F}", dmg: 18, range: 2.6, cd: 0.6, desc: "+vs Bacteria. Quiet swing." },
+  pipe_wrench: { name: "Pipe Wrench", icon: "\u{1F527}", dmg: 26, range: 2.5, cd: 0.8, desc: "Lv1 garage classic." },
+  machete: { name: "Machete", icon: "\u{1F52A}", dmg: 32, range: 2.6, cd: 0.55, desc: "Fast. Bleeds hounds." },
+  fire_axe: { name: "Fire Axe", icon: "\u{1FA93}", dmg: 55, range: 2.8, cd: 1.1, desc: "One-shots moths, dents all." },
+  almond_darts: { name: "Almond Darts", icon: "\u{1F3AF}", dmg: 40, range: 14, cd: 1, ammo: true, desc: "Ranged. Bacteria/moths melt." },
+  stun_lantern: { name: "Stun Lantern", icon: "\u{1F4A1}", dmg: 5, range: 9, cd: 3, stun: 5, desc: "Burst blinds + stuns 5s." },
+  katana: { name: "Katana", icon: "\u{1F5E1}\uFE0F", dmg: 38, range: 3, cd: 0.4, desc: "Fastest melee. Slices moths/shadows." },
+  nailgun: { name: "Nailgun", icon: "\u{1F52B}", dmg: 28, range: 14, cd: 0.7, ammo: true, desc: "Ranged. Drains battery per shot." },
+  shotgun: { name: "Almond Shotgun", icon: "\u{1F4A5}", dmg: 70, range: 3.4, cd: 1.3, desc: "Close spread. 3x pellets vs party." },
+  spear: { name: "Scrap Spear", icon: "\u{1F9AF}", dmg: 34, range: 3.6, cd: 0.7, desc: "Long reach. Craft: crowbar+tape." },
+  crossbow: { name: "Crossbow", icon: "\u{1F3F9}", dmg: 46, range: 15, cd: 1.2, ammo: true, desc: "Silent. Long range, no battery." }
+};
+
+// vfs:maze.js
+function genMaze(n, seed) {
+  let s = seed >>> 0;
+  const rnd = () => {
+    s = s * 1664525 + 1013904223 >>> 0;
+    return s / 4294967296;
+  };
+  let g = Array.from({ length: n }, () => Array(n).fill(1));
+  function carve(x, y) {
+    g[y][x] = 0;
+    let d = [[2, 0], [-2, 0], [0, 2], [0, -2]].sort(() => rnd() - 0.5);
+    for (let [dx, dy] of d) {
+      let nx = x + dx, ny = y + dy;
+      if (nx > 0 && ny > 0 && nx < n - 1 && ny < n - 1 && g[ny][nx] === 1) {
+        g[y + dy / 2][x + dx / 2] = 0;
+        carve(nx, ny);
+      }
+    }
+  }
+  carve(1, 1);
+  for (let i = 0; i < n * n * 0.04; i++) {
+    g[1 + Math.floor(rnd() * (n - 2))][1 + Math.floor(rnd() * (n - 2))] = 0;
+  }
+  g[1][1] = 0;
+  g[n - 2][n - 2] = 0;
+  return g;
+}
+function freeCells(g) {
+  let o = [];
+  for (let y = 0; y < g.length; y++) for (let x = 0; x < g.length; x++) if (!g[y][x]) o.push([x, y]);
+  return o;
+}
+
+// vfs:audio.js
+var C = null;
+function audio() {
+  if (!C) {
+    C = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (C.state === "suspended") C.resume();
+  return C;
+}
+function hum(on) {
+  try {
+    const c = audio();
+    if (!on && hum._o) {
+      hum._o.stop();
+      hum._o = null;
+      return;
+    }
+    if (hum._o || !on) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sawtooth";
+    o.frequency.value = 120;
+    g.gain.value = 0.015;
+    const o2 = c.createOscillator(), g2 = c.createGain();
+    o2.type = "sine";
+    o2.frequency.value = 60;
+    g2.gain.value = 0.03;
+    o.connect(g).connect(c.destination);
+    o2.connect(g2).connect(c.destination);
+    o.start();
+    o2.start();
+    hum._o = { stop() {
+      try {
+        o.stop();
+        o2.stop();
+      } catch (e) {
+      }
+    }, o };
+  } catch (e) {
+  }
+}
+function beep(f = 440, d = 0.15, t = "square", v = 0.12) {
+  try {
+    const c = audio(), o = c.createOscillator(), g = c.createGain();
+    o.type = t;
+    o.frequency.value = f;
+    g.gain.value = v;
+    o.connect(g).connect(c.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(1e-3, c.currentTime + d);
+    o.stop(c.currentTime + d);
+  } catch (e) {
+  }
+}
+function step() {
+  beep(90 + Math.random() * 40, 0.07, "triangle", 0.06);
+}
+function hit() {
+  beep(150, 0.2, "sawtooth", 0.2);
+}
+function pickupS() {
+  beep(660, 0.12, "sine", 0.15);
+  setTimeout(() => beep(880, 0.12, "sine", 0.15), 90);
+}
+function hurt() {
+  beep(110, 0.3, "sawtooth", 0.25);
+}
+function sting() {
+  beep(220, 0.5, "sawtooth", 0.2);
+  setTimeout(() => beep(180, 0.6, "sawtooth", 0.2), 200);
+}
+
+// vfs:craft.js
+var RECIPES = [
+  { id: "spear", name: "Scrap Spear", need: { crowbar: 1, duct_tape: 1 }, gives: "spear", desc: "Crowbar + tape = long reach spear." },
+  { id: "darts2", name: "Almond Bundle", need: { almond_water: 1, energy_bar: 1 }, gives: "almond_darts", desc: "Infuse darts with almond water." },
+  { id: "med2", name: "Field Medkit", need: { bandage: 2, almond_water: 1 }, gives: "medkit", desc: "2 bandages + almond water." },
+  { id: "nails2", name: "Nail Bomb", need: { batteries: 1, duct_tape: 1 }, gives: "repellent", desc: "Battery acid + tape = repellent." },
+  { id: "stim", name: "Stim Shot", need: { coffee: 1, energy_bar: 1 }, gives: "adrenaline", desc: "Coffee + bar = full sprint + heal." },
+  { id: "armor", name: "Taped Jacket", need: { duct_tape: 2 }, gives: "jacket", desc: "-40% damage while held." }
+];
+function canCraft(inv2, recipe) {
+  let c = {};
+  inv2.forEach((i) => c[i] = (c[i] || 0) + 1);
+  return Object.entries(recipe.need).every(([k, n]) => (c[k] || 0) >= n);
+}
+function doCraft(inv2, recipe) {
+  for (let [k, n] of Object.entries(recipe.need)) for (let i = 0; i < n; i++) inv2.splice(inv2.indexOf(k), 1);
+  return recipe.gives;
+}
+
+// vfs:story.js
+var TAPES = [
+  { t: "TAPE 0 \u2014 'don't follow the hum'", x: "Day 11. The hum is 120hz. It stops when IT is near. If the lights buzz, run. \u2014 K." },
+  { t: "TAPE 1 \u2014 garage dogs", x: "They blindfolded the hounds once. They still found us by our shoes squeaking. Walk. \u2014 M." },
+  { t: "TAPE 2 \u2014 pipe crew", x: "We lost the 15A fuse down the hot tunnel. Exit needs two. Don't drink the pipe water. \u2014 R." },
+  { t: "TAPE 3 \u2014 smiler light", x: "Smiler froze under my flashlight for 4 seconds. Batteries = life. Hoard them. \u2014 J." },
+  { t: "TAPE 6 \u2014 party", x: "If you hear balloons, kill your light? No \u2014 RUN. They see heat. Slide is behind the cake. \u2014 =(" },
+  { t: "TAPE 9 \u2014 shadow self", x: "It stands where you stood 10 seconds ago. Never stop moving. Nightvision shows it green. \u2014 V." },
+  { t: "TAPE 33 \u2014 last train", x: "The metro still runs for something. 3 fuses. Don't look at windows. Look at the floor. \u2014 conductor" },
+  { t: "TAPE ! \u2014 mama", x: "She sings happy birthday with 3 voices. Shotgun works. Repellent works. Grief doesn't. \u2014 survivor" }
+];
+var INTROS = {
+  T: "Training room. Small, lit, safe. Learn the moves \u2014 everything here stays here.",
+  0: "You fell through the floor at work. Carpet. Hum. Yellow.",
+  1: "Concrete. Fog. Something pants in the dark.",
+  2: "Heat. Pipes. The exit door is dead without fuses.",
+  3: "Breakers hum. Teeth grin where the wires hang.",
+  4: "Cubicles forever. Something sleeps in arm-piles.",
+  5: "Check-in is eternal. Your room key glows faintly.",
+  6: "Your flashlight sputters. Balloons squeak nearby.",
+  7: "Chlorine and tile. The deep hole calls.",
+  8: "RED HALLS. SHE IS AWAKE. RUN.",
+  9: "No light. No sound. Your shadow walks without you.",
+  10: "Cake. Balloons. Smiles. All lies. Fight through.",
+  11: "A train idles with no driver. Power it. Leave.",
+  12: "Endless motion. Windows pass but never stop.",
+  13: "Sermon halls. Static prays where the speakers hang.",
+  14: "Tiled bathrooms. Something knocks from inside stalls."
+};
+var ACHIEVE = {
+  firstblood: { name: "First Blood", desc: "Kill any entity" },
+  mama: { name: "Mama Down", desc: "Kill Mama Party" },
+  pacifist: { name: "Ghost", desc: "Escape a level with 0 kills" },
+  rich: { name: "Hoarder", desc: "Hold 20 backcoins" },
+  crafter: { name: "Tinkerer", desc: "Craft anything" },
+  guide: { name: "Guided", desc: "Meet The Guide" }
+};
+
+// vfs:fx.js
+var floats = [];
+var shake = 0;
+function addFloat(x, y, t, color = "#ffe9a3") {
+  floats.push({ x, y, t, life: 1.4, color });
+}
+function addShake(n) {
+  shake = Math.min(14, shake + n);
+}
+function stepFx(dt, cx, cy, ctx2) {
+  floats.forEach((f) => {
+    f.y -= 34 * dt;
+    f.life -= dt;
+  });
+  floats = floats.filter((f) => f.life > 0);
+  if (shake > 0) shake = Math.max(0, shake - dt * 26);
+}
+function drawFloats(ctx2, cx, cy) {
+  ctx2.textAlign = "center";
+  ctx2.font = "bold 14px monospace";
+  floats.forEach((f) => {
+    ctx2.globalAlpha = Math.min(1, f.life);
+    ctx2.fillStyle = f.color;
+    ctx2.fillText(f.t, f.x - cx, f.y - cy);
+    ctx2.globalAlpha = 1;
+  });
+}
+function shakeOff() {
+  let a = Math.random() * 6.28, m = shake;
+  return [Math.cos(a) * m, Math.sin(a) * m];
+}
+
+// vfs:weaponview.js
+var lastAtk = 0;
+function notifyShot() {
+  lastAtk = performance.now();
+}
+function recent() {
+  return (performance.now() - lastAtk) / 1e3;
+}
+function swingK(cd) {
+  let t = recent();
+  if (t > 0.35) return 0;
+  return Math.sin(t / 0.35 * Math.PI);
+}
+function drawPlayerWeapon(ctx2, X, Y, ang, wid) {
+  let t = recent(), sw = swingK();
+  ctx2.save();
+  ctx2.translate(X, Y);
+  ctx2.fillStyle = "rgba(0,0,0,.45)";
+  ctx2.beginPath();
+  ctx2.ellipse(0, 3, 14, 11, 0, 0, 7);
+  ctx2.fill();
+  ctx2.rotate(ang);
+  ctx2.fillStyle = "#1c2638";
+  ctx2.strokeStyle = "#0a0e16";
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 12, 0, 7);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = "#31435f";
+  ctx2.fillRect(-14, -7, 7, 14);
+  ctx2.fillStyle = "#c9a87a";
+  ctx2.beginPath();
+  ctx2.arc(2, 0, 6, 0, 7);
+  ctx2.fill();
+  ctx2.fillStyle = "#222";
+  ctx2.beginPath();
+  ctx2.arc(2, 0, 6, 0, 7);
+  ctx2.stroke();
+  let gun = wid === "shotgun" || wid === "nailgun" || wid === "crossbow" || wid === "almond_darts";
+  let hx = gun ? 12 : 14, hy = 6;
+  ctx2.fillStyle = "#c9a87a";
+  ctx2.beginPath();
+  ctx2.arc(hx, hy, 4, 0, 7);
+  ctx2.fill();
+  ctx2.beginPath();
+  ctx2.arc(hx, -hy, 4, 0, 7);
+  ctx2.fill();
+  ctx2.save();
+  if (!gun) ctx2.rotate(sw * 1.1);
+  drawGun(ctx2, wid, t, sw);
+  ctx2.restore();
+  if (gun && t < 0.09) {
+    let mz = muzzle(wid);
+    ctx2.fillStyle = "rgba(255,220,120,.95)";
+    ctx2.strokeStyle = "#ff9500";
+    ctx2.lineWidth = 2;
+    ctx2.beginPath();
+    ctx2.moveTo(mz, 0);
+    ctx2.lineTo(mz + 16, -7);
+    ctx2.lineTo(mz + 11, 0);
+    ctx2.lineTo(mz + 16, 7);
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.stroke();
+    ctx2.fillStyle = "#fff";
+    ctx2.beginPath();
+    ctx2.arc(mz + 4, 0, 4, 0, 7);
+    ctx2.fill();
+  }
+  if (!gun && t < 0.3) {
+    ctx2.strokeStyle = "rgba(255,255,255,.35)";
+    ctx2.lineWidth = 5;
+    ctx2.beginPath();
+    ctx2.arc(0, 0, 38, -0.9 + sw * 0.4, 0.9 + sw * 0.4);
+    ctx2.stroke();
+  }
+  ctx2.restore();
+}
+function muzzle(wid) {
+  if (wid === "shotgun") return 46;
+  if (wid === "spear") return 50;
+  if (wid === "katana") return 44;
+  if (wid === "crossbow") return 42;
+  if (wid === "nailgun") return 40;
+  if (wid === "almond_darts") return 34;
+  if (wid === "fire_axe") return 36;
+  if (wid === "machete") return 38;
+  if (wid === "crowbar") return 36;
+  if (wid === "pipe_wrench") return 34;
+  return 22;
+}
+function drawGun(ctx2, wid, t, sw) {
+  ctx2.lineCap = "round";
+  ctx2.lineJoin = "round";
+  if (wid === "fists") {
+    let p = 1 - Math.min(1, t / 0.25);
+    ctx2.fillStyle = "#c9a87a";
+    ctx2.beginPath();
+    ctx2.arc(20, -5 - p * 8, 5, 0, 7);
+    ctx2.fill();
+    ctx2.strokeStyle = "#5a3d22";
+    ctx2.lineWidth = 1;
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.arc(20, 5 + p * 8, 5, 0, 7);
+    ctx2.fill();
+    ctx2.stroke();
+    return;
+  }
+  if (wid === "crowbar") {
+    ctx2.strokeStyle = "#3a3f46";
+    ctx2.lineWidth = 6;
+    ctx2.beginPath();
+    ctx2.moveTo(8, 4);
+    ctx2.lineTo(32, 0);
+    ctx2.stroke();
+    ctx2.strokeStyle = "#9aa2ad";
+    ctx2.lineWidth = 4;
+    ctx2.beginPath();
+    ctx2.moveTo(8, 4);
+    ctx2.lineTo(32, 0);
+    ctx2.stroke();
+    ctx2.strokeStyle = "#c02020";
+    ctx2.lineWidth = 5;
+    ctx2.beginPath();
+    ctx2.moveTo(32, 0);
+    ctx2.lineTo(37, -5);
+    ctx2.stroke();
+    ctx2.fillStyle = "#111";
+    ctx2.fillRect(6, 1, 8, 6);
+    return;
+  }
+  if (wid === "pipe_wrench") {
+    ctx2.fillStyle = "#7a4a22";
+    ctx2.fillRect(8, -3, 20, 6);
+    ctx2.fillStyle = "#9aa2ad";
+    ctx2.fillRect(26, -6, 8, 12);
+    ctx2.fillStyle = "#3a3f46";
+    ctx2.fillRect(32, -8, 5, 4);
+    ctx2.fillRect(32, 4, 5, 4);
+    ctx2.fillStyle = "#111";
+    ctx2.fillRect(8, -3, 4, 6);
+    return;
+  }
+  if (wid === "machete") {
+    ctx2.fillStyle = "#4a2f18";
+    ctx2.fillRect(8, -3, 9, 6);
+    ctx2.fillStyle = "#c8ccd2";
+    ctx2.beginPath();
+    ctx2.moveTo(17, -4);
+    ctx2.lineTo(38, -2);
+    ctx2.lineTo(38, 2);
+    ctx2.lineTo(17, 4);
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.strokeStyle = "#5a6068";
+    ctx2.lineWidth = 1;
+    ctx2.beginPath();
+    ctx2.moveTo(17, -2);
+    ctx2.lineTo(38, 0);
+    ctx2.stroke();
+    return;
+  }
+  if (wid === "katana") {
+    ctx2.fillStyle = "#111";
+    ctx2.fillRect(6, -2, 11, 5);
+    ctx2.fillStyle = "#e8ecf2";
+    ctx2.beginPath();
+    ctx2.moveTo(17, -2);
+    ctx2.lineTo(44, -1);
+    ctx2.lineTo(44, 1);
+    ctx2.lineTo(17, 2);
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.strokeStyle = "#7ab0ff";
+    ctx2.lineWidth = 1;
+    ctx2.beginPath();
+    ctx2.moveTo(17, 0);
+    ctx2.lineTo(44, 0);
+    ctx2.stroke();
+    ctx2.fillStyle = "#c9a227";
+    ctx2.fillRect(15, -4, 3, 8);
+    return;
+  }
+  if (wid === "fire_axe") {
+    ctx2.fillStyle = "#7a4a22";
+    ctx2.fillRect(8, -2, 26, 5);
+    ctx2.fillStyle = "#8a9098";
+    ctx2.fillRect(28, -9, 8, 18);
+    ctx2.fillStyle = "#c02020";
+    ctx2.fillRect(34, -9, 3, 18);
+    return;
+  }
+  if (wid === "spear") {
+    ctx2.fillStyle = "#7a5a30";
+    ctx2.fillRect(2, -2, 38, 4);
+    ctx2.fillStyle = "#222";
+    ctx2.fillRect(14, -3, 8, 6);
+    ctx2.fillStyle = "#d8dce2";
+    ctx2.beginPath();
+    ctx2.moveTo(40, -4);
+    ctx2.lineTo(52, 0);
+    ctx2.lineTo(40, 4);
+    ctx2.closePath();
+    ctx2.fill();
+    return;
+  }
+  if (wid === "stun_lantern") {
+    ctx2.fillStyle = "#222";
+    ctx2.fillRect(12, -7, 14, 14);
+    ctx2.fillStyle = t < 0.25 ? "#fff8c8" : "#ffdf6b";
+    ctx2.fillRect(15, -4, 8, 8);
+    ctx2.strokeStyle = "#888";
+    ctx2.lineWidth = 2;
+    ctx2.strokeRect(12, -7, 14, 14);
+    return;
+  }
+  if (wid === "almond_darts") {
+    ctx2.fillStyle = "#2a4a2a";
+    ctx2.fillRect(8, -4, 24, 8);
+    ctx2.fillStyle = "#111";
+    ctx2.fillRect(28, -2, 6, 4);
+    ctx2.fillStyle = "#e8d8a8";
+    ctx2.beginPath();
+    ctx2.arc(36, 0, 3, 0, 7);
+    ctx2.fill();
+    return;
+  }
+  if (wid === "nailgun") {
+    ctx2.fillStyle = "#2f6a8a";
+    ctx2.fillRect(6, -6, 24, 11);
+    ctx2.fillStyle = "#222";
+    ctx2.fillRect(10, 4, 6, 8);
+    ctx2.fillStyle = "#555";
+    ctx2.fillRect(12, -11, 14, 5);
+    ctx2.fillStyle = "#999";
+    ctx2.fillRect(30, -2, 10, 4);
+    ctx2.fillStyle = "#ffdf6b";
+    ctx2.fillRect(8, -4, 4, 3);
+    return;
+  }
+  if (wid === "shotgun") {
+    ctx2.fillStyle = "#5a3a1a";
+    ctx2.fillRect(8, -3, 18, 6);
+    ctx2.fillStyle = "#3a3f46";
+    ctx2.fillRect(26, -4, 18, 3);
+    ctx2.fillRect(26, 1, 18, 3);
+    ctx2.fillStyle = "#222";
+    ctx2.fillRect(42, -5, 4, 10);
+    ctx2.fillStyle = "#c9a227";
+    ctx2.fillRect(12, -5, 3, 3);
+    ctx2.fillRect(17, -5, 3, 3);
+    return;
+  }
+  if (wid === "crossbow") {
+    ctx2.fillStyle = "#5a3a1a";
+    ctx2.fillRect(6, -2, 32, 5);
+    ctx2.strokeStyle = "#111";
+    ctx2.lineWidth = 4;
+    ctx2.beginPath();
+    ctx2.moveTo(30, 0);
+    ctx2.quadraticCurveTo(20, -12, 12, -14);
+    ctx2.moveTo(30, 0);
+    ctx2.quadraticCurveTo(20, 12, 12, 14);
+    ctx2.stroke();
+    ctx2.strokeStyle = "#ddd";
+    ctx2.lineWidth = 1;
+    ctx2.beginPath();
+    ctx2.moveTo(12, -14);
+    ctx2.lineTo(12, 14);
+    ctx2.stroke();
+    ctx2.fillStyle = "#d8dce2";
+    ctx2.fillRect(10, -1, 28, 2);
+    return;
+  }
+  ctx2.fillStyle = "#666";
+  ctx2.fillRect(8, -2, 16, 4);
+}
+function drawProjReal(ctx2, x, y, p) {
+  if (p.lure) return false;
+  let a = Math.atan2(p.vy, p.vx);
+  ctx2.save();
+  ctx2.translate(x, y);
+  ctx2.rotate(a);
+  if (p.dmg >= 30) {
+    ctx2.strokeStyle = "#ffb300";
+    ctx2.lineWidth = 4;
+    ctx2.beginPath();
+    ctx2.moveTo(-14, 0);
+    ctx2.lineTo(0, 0);
+    ctx2.stroke();
+    ctx2.fillStyle = "#fff";
+    ctx2.beginPath();
+    ctx2.arc(2, 0, 4, 0, 7);
+    ctx2.fill();
+  } else {
+    ctx2.strokeStyle = "#aef";
+    ctx2.lineWidth = 3;
+    ctx2.beginPath();
+    ctx2.moveTo(-10, 0);
+    ctx2.lineTo(0, 0);
+    ctx2.stroke();
+    ctx2.fillStyle = "#fff";
+    ctx2.beginPath();
+    ctx2.arc(1, 0, 2.5, 0, 7);
+    ctx2.fill();
+  }
+  ctx2.restore();
+  return true;
+}
+
+// vfs:details.js
+var decals = [];
+var motes = [];
+function clearDetails() {
+  decals = [];
+  motes = [];
+  for (let i = 0; i < 70; i++) motes.push({ ox: Math.random(), oy: Math.random(), s: 1 + Math.random() * 2, v: 4 + Math.random() * 10, ph: Math.random() * 7 });
+}
+function h2(x, y) {
+  let n = x * 374761393 + y * 668265263;
+  n = (n ^ n >> 13) * 1274126177;
+  return ((n ^ n >> 16) >>> 0) / 4294967295;
+}
+function addDecal(x, y, kind) {
+  if (decals.length > 220) decals.shift();
+  decals.push({ x, y, kind, life: kind === "blood" ? 60 : 40 });
+}
+function stepDecals(dt) {
+  decals.forEach((d) => d.life -= dt * 0.05);
+  decals = decals.filter((d) => d.life > 0);
+}
+function drawFloorD(ctx2, sx, sy, x, y, T2, L2) {
+  let h = h2(x, y);
+  ctx2.fillStyle = "rgba(0,0,0,.14)";
+  if ((x + y & 1) === 0) ctx2.fillRect(sx, sy, T2, T2);
+  if (L2.id === 0) {
+    ctx2.fillStyle = "rgba(0,0,0,.08)";
+    for (let i = 1; i < 4; i++) ctx2.fillRect(sx, sy + i * (T2 / 4), T2, 1);
+  }
+  if (L2.id === 5) {
+    ctx2.fillStyle = "rgba(60,10,10,.25)";
+    ctx2.fillRect(sx + 8, sy + 8, T2 - 16, T2 - 16);
+    ctx2.strokeStyle = "rgba(120,40,20,.3)";
+    ctx2.strokeRect(sx + 8, sy + 8, T2 - 16, T2 - 16);
+  }
+  if (L2.id === 7 || L2.id === 14) {
+    ctx2.strokeStyle = "rgba(255,255,255,.14)";
+    ctx2.lineWidth = 1;
+    ctx2.strokeRect(sx + 0.5, sy + 0.5, T2 - 1, T2 - 1);
+  }
+  if (L2.id === 1 && h > 0.86) {
+    ctx2.fillStyle = "rgba(10,10,10,.5)";
+    ctx2.beginPath();
+    ctx2.ellipse(sx + T2 * h, sy + T2 * h2(y, x), 8, 5, h * 3, 0, 7);
+    ctx2.fill();
+  }
+  if (h > 0.93) {
+    ctx2.fillStyle = "rgba(0,0,0,.3)";
+    ctx2.beginPath();
+    ctx2.ellipse(sx + T2 / 2, sy + T2 / 2, 7, 4, 0, 0, 7);
+    ctx2.fill();
+  }
+  if (h > 0.965) {
+    ctx2.fillStyle = "rgba(220,215,190,.5)";
+    ctx2.save();
+    ctx2.translate(sx + T2 / 2, sy + T2 / 2);
+    ctx2.rotate(h * 6);
+    ctx2.fillRect(-7, -4, 14, 8);
+    ctx2.fillStyle = "rgba(0,0,0,.2)";
+    ctx2.fillRect(-7, 0, 14, 1);
+    ctx2.restore();
+  }
+  if (h < 0.06) {
+    ctx2.strokeStyle = "rgba(0,0,0,.35)";
+    ctx2.beginPath();
+    ctx2.moveTo(sx + 6, sy + T2 - 8);
+    ctx2.lineTo(sx + T2 - 10, sy + 4);
+    ctx2.stroke();
+  }
+}
+function drawWallD(ctx2, sx, sy, x, y, T2, L2, grid2) {
+  let h = h2(x * 3 + 1, y * 7 + 2);
+  ctx2.fillStyle = "rgba(255,255,255,.09)";
+  ctx2.fillRect(sx, sy, T2, 3);
+  ctx2.fillStyle = "rgba(0,0,0,.35)";
+  ctx2.fillRect(sx, sy + T2 - 5, T2, 5);
+  if (h > 0.9) {
+    ctx2.fillStyle = "rgba(0,0,0,.25)";
+    ctx2.fillRect(sx + T2 * 0.3, sy, 4, T2);
+  }
+  if (L2.id === 2) {
+    ctx2.fillStyle = "#7a5a28";
+    ctx2.fillRect(sx, sy + T2 / 2 - 3, T2, 6);
+    ctx2.fillStyle = "#3a2c12";
+    ctx2.fillRect(sx, sy + T2 / 2 - 1, T2, 2);
+  }
+  if (L2.id === 3 && h > 0.7) {
+    ctx2.fillStyle = "#ffef9a";
+    ctx2.fillRect(sx + 6, sy + 6, 4, 4);
+    ctx2.fillStyle = "rgba(255,240,150,.25)";
+    ctx2.fillRect(sx + 2, sy + 2, 12, 12);
+  }
+  if (L2.id === 8 && h > 0.5) {
+    ctx2.fillStyle = "#ff4040";
+    ctx2.fillRect(sx, sy + T2 / 2 - 2, T2, 4);
+  }
+  let gy = grid2;
+  let open = gy[y] && gy[y][x] !== void 0;
+  let below = y + 1 < gy.length && gy[y + 1] && gy[y + 1][x] === 0;
+  if (below) {
+    ctx2.fillStyle = "rgba(0,0,0,.5)";
+    ctx2.fillRect(sx, sy + T2 - 8, T2, 8);
+  }
+}
+function drawDecals(ctx2, cx, cy) {
+  decals.forEach((d) => {
+    let X = d.x - cx, Y = d.y - cy;
+    if (d.kind === "blood") {
+      ctx2.fillStyle = `rgba(140,10,10,${Math.min(1, d.life)})`;
+      ctx2.beginPath();
+      ctx2.arc(X, Y, 5, 0, 7);
+      ctx2.fill();
+      ctx2.beginPath();
+      ctx2.arc(X + 5, Y + 2, 3, 0, 7);
+      ctx2.fill();
+    } else if (d.kind === "step") {
+      ctx2.fillStyle = `rgba(0,0,0,${0.25 * Math.min(1, d.life)})`;
+      ctx2.beginPath();
+      ctx2.ellipse(X, Y, 4, 2.5, 0, 0, 7);
+      ctx2.fill();
+    } else if (d.kind === "scorch") {
+      ctx2.fillStyle = `rgba(20,20,20,${0.5 * Math.min(1, d.life)})`;
+      ctx2.beginPath();
+      ctx2.arc(X, Y, 9, 0, 7);
+      ctx2.fill();
+    }
+  });
+}
+function drawMotes(ctx2, W2, H2, t) {
+  ctx2.fillStyle = "rgba(255,245,200,.35)";
+  motes.forEach((m) => {
+    let x = (m.ox * W2 + t * m.v) % W2, y = (m.oy * H2 + Math.sin(t + m.ph) * 8 + H2) % H2;
+    ctx2.fillRect(x, y, m.s, m.s);
+  });
+}
+function drawExitD(ctx2, X, Y, L2, t) {
+  ctx2.save();
+  ctx2.translate(X, Y);
+  let pulse = 1 + Math.sin(t / 300) * 0.08;
+  ctx2.scale(pulse, pulse);
+  ctx2.fillStyle = "rgba(0,0,0,.5)";
+  ctx2.beginPath();
+  ctx2.ellipse(0, 14, 20, 7, 0, 0, 7);
+  ctx2.fill();
+  if (L2.id === 7 || L2.id === 14) {
+    ctx2.fillStyle = "#062a33";
+    ctx2.fillRect(-16, -16, 32, 32);
+    ctx2.fillStyle = "#9adbe8";
+    ctx2.fillRect(-13, -13, 26, 26);
+    ctx2.fillStyle = "#062a33";
+    ctx2.beginPath();
+    ctx2.arc(0, 0, 7, 0, 7);
+    ctx2.fill();
+  } else if (L2.id === 1) {
+    ctx2.fillStyle = "#333";
+    ctx2.fillRect(-18, -14, 36, 28);
+    ctx2.fillStyle = "#888";
+    ctx2.fillRect(-18, -14, 36, 4);
+    ctx2.fillStyle = "#ffdf6b";
+    ctx2.fillRect(-3, -10, 6, 6);
+  } else if (L2.id === 8) {
+    ctx2.fillStyle = "#fff";
+    ctx2.fillRect(-14, -16, 28, 32);
+    ctx2.fillStyle = "#c02020";
+    ctx2.fillRect(-14, -16, 28, 5);
+    ctx2.fillStyle = "#111";
+    ctx2.font = "12px monospace";
+    ctx2.textAlign = "center";
+    ctx2.fillText("RUN", 0, 6);
+  } else {
+    ctx2.fillStyle = "#2a1f08";
+    ctx2.fillRect(-15, -15, 30, 30);
+    ctx2.fillStyle = "#ffdf6b";
+    ctx2.fillRect(-11, -11, 22, 22);
+    ctx2.fillStyle = "#2a1f08";
+    ctx2.fillRect(-4, -11, 8, 22);
+  }
+  ctx2.restore();
+  ctx2.save();
+  ctx2.translate(X, Y - 34 - Math.sin(t / 400) * 3);
+  ctx2.fillStyle = "#ffe9a3";
+  ctx2.font = "bold 11px monospace";
+  ctx2.textAlign = "center";
+  let label = { T: "TRAINING EXIT \u{1F393}", 0: "STAIR \u25B2", 1: "GARAGE \u21E7", 2: "POWERED DOOR \u26A1", 3: "BREAKER \u26A1", 6: "SLIDE \u25BC", 8: "WHITE DOOR", 10: "CAKE DOOR \u{1F370}" }[L2.id] || "EXIT \u25B2";
+  ctx2.fillText("\u25C8 " + label, 0, 0);
+  ctx2.restore();
+}
+
+// <stdin>
+var cv = document.getElementById("c3d");
+var ctx = cv.getContext("2d");
+var mapC = document.getElementById("map");
+var mapX = mapC.getContext("2d");
+var $ = (id) => document.getElementById(id);
+var menu = $("menu");
+var tabBody = $("tabBody");
+var lvlSel = $("lvlSel");
+var W = 0;
+var H = 0;
+function rs() {
+  W = cv.width = cv.clientWidth || innerWidth;
+  H = cv.height = cv.clientHeight || innerHeight;
+}
+addEventListener("resize", rs);
+rs();
+LEVELS.forEach((l, i) => {
+  let o = document.createElement("option");
+  o.value = i;
+  o.textContent = l.name;
+  lvlSel.appendChild(o);
+});
+var T = 64;
+var grid = [];
+var GW = 0;
+var GH = 0;
+var px = 0;
+var py = 0;
+var fx = 1;
+var fy = 0;
+var hp = 100;
+var st = 100;
+var sa = 100;
+var bat = 100;
+var lightOn = true;
+var inv = [];
+var sel = 0;
+var weapon = "fists";
+var items = [];
+var ents = [];
+var projs = [];
+var parts = [];
+var safes = [];
+var inSafe = false;
+var exit = { x: 0, y: 0 };
+var fuses = 0;
+var needF = 0;
+var li = 0;
+var L = LEVELS[0];
+var keys = {};
+var playing = false;
+var lastT = 0;
+var atkCd = 0;
+var msgT = null;
+var seen = 0;
+var chasing = false;
+var stepT = 0;
+var joy = { x: 0, y: 0 };
+var kills = +(localStorage.getItem("br_kills") || 0);
+var boost = 0;
+var hasNV = false;
+var ach = {};
+try {
+  ach = JSON.parse(localStorage.getItem("br_ach") || "{}");
+} catch (e) {
+  ach = {};
+}
+function unlock(id) {
+  if (ach[id]) return;
+  ach[id] = 1;
+  try {
+    localStorage.setItem("br_ach", JSON.stringify(ach));
+  } catch (e) {
+  }
+  say("\u{1F3C6} " + ACHIEVE[id].name + " \u2014 " + ACHIEVE[id].desc);
+  beep(880, 0.2);
+}
+function lorePop(t, x) {
+  say("\u{1F4FC} " + t + " \u2014 " + x, 4200);
+  unlock("guide");
+}
+var tapesFound = [];
+try {
+  tapesFound = JSON.parse(localStorage.getItem("br_tapes") || "[]");
+} catch (e) {
+}
+var tut = { move: false, pick: false, hit: false };
+var tutCoins = 0;
+var coins = +(localStorage.getItem("br_coins") || 0);
+var traders = [];
+function updCoins() {
+  let e = $("coinTag");
+  if (!e) {
+    e = document.createElement("span");
+    e.className = "tag";
+    e.id = "coinTag";
+    $("top").appendChild(e);
+  }
+  e.textContent = "\u{1FA99} " + coins;
+  try {
+    localStorage.setItem("br_coins", coins);
+  } catch (x) {
+  }
+}
+updCoins();
+var ghosts = /* @__PURE__ */ new Map();
+var sock = null;
+var myId = String(Math.random() * 1e9 | 0);
+var netT = 0;
+function netInit() {
+  try {
+    if (!root.createServerSocket) return;
+    let s = root.createServerSocket();
+    sock = s;
+    s.addEventListener("open", () => {
+      updNetTag();
+    });
+    s.addEventListener("message", (ev) => {
+      try {
+        let m = String(ev.data);
+        if (m[0] === "p") {
+          let p = m.split("|");
+          if (p[1] === myId) return;
+          ghosts.set(p[1], { x: +p[2], y: +p[3], lv: +p[4], t: Date.now() });
+        } else if (m[0] === "c") {
+          say("\u{1F4AC} " + m.slice(7));
+        }
+      } catch (e) {
+      }
+    });
+    s.addEventListener("close", (ev) => {
+      sock = null;
+      setTimeout(() => {
+        if (!sock) netInit();
+      }, 4e3 + Math.random() * 4e3);
+    });
+    setInterval(() => {
+      for (let [k, v] of ghosts) if (Date.now() - v.t > 8e3) ghosts.delete(k);
+    }, 3e3);
+  } catch (e) {
+  }
+}
+function updNetTag() {
+  let e = $("netTag");
+  if (!e) {
+    e = document.createElement("span");
+    e.className = "tag";
+    e.id = "netTag";
+    $("top").appendChild(e);
+  }
+  let n = ghosts.size + (sock ? 1 : 0);
+  e.textContent = "\u{1F310} " + n + " online";
+}
+try {
+  netInit();
+} catch (e) {
+}
+addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && playing && sock) {
+    let m = prompt("Say to level chat:");
+    if (m) sock.send("c|" + String(L.id).padStart(4, "0") + "|" + m.slice(0, 80));
+  }
+});
+try {
+  let u = +localStorage.getItem("br_unlocked") || 0;
+  for (let i = 0; i < lvlSel.options.length; i++) if (i > u) lvlSel.options[i].textContent += " \u{1F512}";
+} catch (e) {
+}
+window.BR = { get x() {
+  return px;
+}, get y() {
+  return py;
+}, get ex() {
+  return exit.x;
+}, get ey() {
+  return exit.y;
+}, get items() {
+  return items;
+}, get ents() {
+  return ents;
+}, tp(x, y) {
+  px = x;
+  py = y;
+}, keys };
+function say(t, ms = 2200) {
+  let m = $("msg");
+  m.textContent = t;
+  m.style.display = "block";
+  clearTimeout(msgT);
+  msgT = setTimeout(() => m.style.display = "none", ms);
+}
+function tab(name) {
+  document.querySelectorAll("#tabRow button").forEach((b) => b.classList.toggle("on", b.dataset.t === name));
+  if (name === "play") {
+    tabBody.innerHTML = `<div style="font-size:13px;line-height:1.7">2D top-down, <b>BIG MAP</b> (45-60 tiles wide). Explore, loot, avoid the entity, power the exit.<br>WASD/arrows move \xB7 mouse aims \xB7 click/Space attacks \xB7 <b>E</b> pickup \xB7 <b>F</b> flashlight \xB7 <b>1-6</b> use slot \xB7 <b>C</b> craft \xB7 <b>J</b> journal \xB7 <b>M</b> menu.</div>`;
+    return;
+  }
+  if (name === "github") {
+    tabBody.innerHTML = `<pre class="git">git init backrooms-game && cd backrooms-game
+mkdir src && cp ~/downloads/src/* src/
+cp main.pjs index.html .
+git add . && git commit -m "backrooms 2D big-map v1"
+gh repo create backrooms-game --public --source=. --push
+# files: src/data.js maze.js audio.js main.js README.md</pre>`;
+    return;
+  }
+  const map = { levels: [LEVELS, ENTITIES], entities: [ENTITIES], items: [ITEMS], weapons: [WEAPONS] }[name];
+  let src = name === "levels" ? LEVELS : name === "entities" ? Object.values(ENTITIES) : name === "items" ? Object.values(ITEMS) : Object.values(WEAPONS);
+  tabBody.innerHTML = `<div class="codex">` + src.map((o) => `<div class="cardx"><b>${o.icon || ""} ${o.name}</b><br><i>${o.sub || o.desc || o.use || ""}</i><br>${o.tip || o.quote || ""}</div>`).join("") + `</div>`;
+}
+document.querySelectorAll("#tabRow button").forEach((b) => b.onclick = () => tab(b.dataset.t));
+tab("play");
+function start(i) {
+  li = i;
+  L = LEVELS[i];
+  let big = Math.min(61, L.size * 2 + 1);
+  if (big % 2 === 0) big++;
+  grid = genMaze(big, Date.now() % 1e5);
+  GW = grid[0].length;
+  GH = grid.length;
+  let free = freeCells(grid);
+  seen = /* @__PURE__ */ new Set();
+  let s = free[0];
+  px = s[0] * T + T / 2;
+  py = s[1] * T + T / 2;
+  let e = free[free.length - 1];
+  exit = { x: e[0] * T + T / 2, y: e[1] * T + T / 2 };
+  needF = L.needFuse || 0;
+  fuses = 0;
+  hp = 100;
+  st = 100;
+  sa = 100;
+  bat = 100;
+  lightOn = true;
+  inv = ["almond_water"];
+  sel = 0;
+  weapon = "fists";
+  projs = [];
+  parts = [];
+  items = [];
+  ents = [];
+  safes = [];
+  inSafe = false;
+  if (L.tutorial) {
+    tut = { move: false, pick: false, hit: false };
+    tutCoins = coins;
+    let c0 = free[2] || free[0];
+    items.push({ id: "crowbar", x: c0[0] * T + T / 2, y: c0[1] * T + T / 2 });
+    let c1 = free[4] || free[0];
+    items.push({ id: "energy_bar", x: c1[0] * T + T / 2, y: c1[1] * T + T / 2 });
+    let c2 = free[6] || free[0];
+    items.push({ id: "batteries", x: c2[0] * T + T / 2, y: c2[1] * T + T / 2 });
+    let mid = free[free.length / 2 | 0];
+    ents.push({ t: "bacteria", x: mid[0] * T + T / 2, y: mid[1] * T + T / 2, hp: 30, max: 30, stun: 0, wx: 0, wy: 0, wt: 0 });
+    let g0 = free[1] || free[0];
+    ents.push({ t: "guide", x: g0[0] * T + T / 2, y: g0[1] * T + T / 2, hp: 999, max: 999, stun: 0, wx: 0, wy: 0, wt: 0 });
+  } else {
+    for (let k = 0; k < 2; k++) {
+      let c = free[Math.random() * free.length | 0];
+      safes.push({ x: c[0] * T + T / 2, y: c[1] * T + T / 2, r: 120 });
+      items.push({ id: Math.random() < 0.5 ? "almond_water" : "batteries", x: c[0] * T + T / 2 + 20, y: c[1] * T + T / 2 });
+    }
+    traders = [];
+    {
+      let pool = ["crowbar", "machete", "pipe_wrench", "katana", "nailgun", "shotgun", "spear", "crossbow", "almond_water", "medkit", "bandage", "repellent", "lantern", "compass", "nightvision", "coffee", "adrenaline", "duct_tape"];
+      safes.forEach((s2) => {
+        let stock = [];
+        for (let k = 0; k < 3; k++) {
+          let id = pool[Math.random() * pool.length | 0];
+          let price = WEAPONS[id] ? 8 + (Math.random() * 8 | 0) : 3 + (Math.random() * 5 | 0);
+          stock.push({ id, price });
+        }
+        traders.push({ x: s2.x - 30, y: s2.y - 30, stock, name: ["Mira", "Dusty", "Ash", "Vex"][Math.random() * 4 | 0] });
+      });
+    }
+    for (let k = 0; k < 14; k++) {
+      let c = free[Math.random() * free.length | 0];
+      items.push({ id: "backcoin", x: c[0] * T + T / 2, y: c[1] * T + T / 2 });
+    }
+    const loot = L.loot;
+    for (let k = 0; k < big * 2; k++) {
+      let c = free[Math.random() * free.length | 0];
+      let id = loot[Math.random() * loot.length | 0];
+      if (ITEMS[id].type === "weapon" || WEAPONS[id]) {
+        if (!inv.includes(id) && Math.random() < 0.3) items.push({ id, x: c[0] * T + T / 2, y: c[1] * T + T / 2 });
+      } else items.push({ id, x: c[0] * T + T / 2 + (Math.random() * 20 - 10), y: c[1] * T + T / 2 + (Math.random() * 20 - 10) });
+    }
+    for (let k = 0; k < needF + 1; k++) {
+      let c = free[Math.random() * free.length | 0];
+      items.push({ id: "fuse", x: c[0] * T + T / 2, y: c[1] * T + T / 2 });
+    }
+    let ec = free[free.length / 2 | 0], E = ENTITIES[L.entity];
+    ents.push({ t: L.entity, x: ec[0] * T + T / 2, y: ec[1] * T + T / 2, hp: E.hp, max: E.hp, stun: 0, wx: 0, wy: 0, wt: 0 });
+    if (L.double) {
+      let c2 = free[free.length / 3 | 0];
+      ents.push({ t: L.entity, x: c2[0] * T + T / 2, y: c2[1] * T + T / 2, hp: E.hp, max: E.hp, stun: 0, wx: 0, wy: 0, wt: 0 });
+    }
+    if (L.id === 8) {
+      let b = free[free.length / 2 | 0];
+      ents.push({ t: "boss", x: b[0] * T + T / 2, y: b[1] * T + T / 2, hp: ENTITIES.boss.hp, max: ENTITIES.boss.hp, stun: 0, wx: 0, wy: 0, wt: 0, big: true, spawnT: 6 });
+      say("\u{1F479} MAMA PARTY has you. Shotgun + repellent. RUN or FIGHT.");
+    }
+    if (Math.random() < 0.3) {
+      let g = free[Math.random() * free.length | 0];
+      ents.push({ t: "guide", x: g[0] * T + T / 2, y: g[1] * T + T / 2, hp: 999, max: 999, stun: 0, wx: 0, wy: 0, wt: 0 });
+    }
+  }
+  boost = 0;
+  clearDetails();
+  $("lvlTag").textContent = L.tutorial ? "TRAINING" : "Lv" + L.id + " \xB7 " + L.name.split("\u2014")[0];
+  menu.style.display = "none";
+  $("load").style.display = "none";
+  playing = true;
+  hum(true);
+  say((INTROS[L.id] || L.name) + " \u2014 " + L.tip, 3400);
+  updHot();
+  updObj();
+  if (coins >= 20) unlock("rich");
+}
+$("playBtn").onclick = () => start(+lvlSel.value);
+{
+  let row = $("playBtn").parentElement, sv = document.createElement("button");
+  sv.className = "btn g";
+  sv.textContent = "\u{1F4BE} SAVE";
+  sv.onclick = () => {
+    if (L.tutorial) {
+      say("\u{1F393} No saving during training \u2014 nothing leaves here.");
+      return;
+    }
+    try {
+      localStorage.setItem("br_save", JSON.stringify({ lid: L.id, inv, weapon, coins }));
+    } catch (e) {
+    }
+    say("Build saved.");
+    beep(660, 0.15);
+  };
+  row.appendChild(sv);
+  let ld = document.createElement("button");
+  ld.className = "btn g";
+  ld.textContent = "\u{1F4C2} LOAD";
+  ld.onclick = () => {
+    let s = null;
+    try {
+      s = JSON.parse(localStorage.getItem("br_save"));
+    } catch (e) {
+    }
+    if (!s) {
+      say("No save yet.");
+      return;
+    }
+    let idx = LEVELS.findIndex((l) => String(l.id) === String(s.lid));
+    if (idx < 0) idx = Math.min(s.li || 0, LEVELS.length - 1);
+    start(idx);
+    inv = s.inv;
+    weapon = s.weapon;
+    coins = s.coins;
+    updCoins();
+    updHot();
+    say("Build loaded.");
+  };
+  row.appendChild(ld);
+}
+lvlSel.onchange = () => $("playBtn").textContent = "ENTER " + LEVELS[+lvlSel.value].name.split("\u2014")[0].trim();
+$("helpBtn").onclick = () => tab("play");
+addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+  window.BR = { get x() {
+    return px;
+  }, get y() {
+    return py;
+  }, get ex() {
+    return exit.x;
+  }, get ey() {
+    return exit.y;
+  }, get items() {
+    return items;
+  }, get ents() {
+    return ents;
+  }, tp(x, y) {
+    px = x;
+    py = y;
+  }, keys };
+  if (e.key === "m") menu.style.display = menu.style.display === "none" ? "flex" : "none";
+  if (!playing) return;
+  if (e.key === "e" || e.key === "E") pickup();
+  if (e.key === "f" || e.key === "F") lightOn = !lightOn;
+  if (e.key === " ") attack();
+  if (e.key === "c" || e.key === "C") toggleCraft();
+  if (e.key === "j" || e.key === "J") showJournal();
+  if (e.key >= "1" && e.key <= "6") useSlot(+e.key - 1);
+});
+addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+cv.addEventListener("mousemove", (e) => {
+  let r = cv.getBoundingClientRect();
+  fx = e.clientX - r.left - W / 2;
+  fy = e.clientY - r.top - H / 2;
+  let l = Math.hypot(fx, fy) || 1;
+  fx /= l;
+  fy /= l;
+});
+cv.addEventListener("mousedown", () => {
+  if (playing) attack();
+});
+$("atkBtn").onclick = () => attack();
+function solid(x, y) {
+  let gx = x / T | 0, gy = y / T | 0;
+  if (gx < 0 || gy < 0 || gx >= GW || gy >= GH) return true;
+  return grid[gy][gx] === 1;
+}
+function pickup() {
+  let bt = null, bd = 70;
+  traders.forEach((t) => {
+    let d = Math.hypot(t.x - px, t.y - py);
+    if (d < bd) {
+      bd = d;
+      bt = t;
+    }
+  });
+  if (bt) {
+    trade(bt);
+    return;
+  }
+  let best = -1;
+  bd = 46;
+  items.forEach((it2, i) => {
+    let d = Math.hypot(it2.x - px, it2.y - py);
+    if (d < bd) {
+      bd = d;
+      best = i;
+    }
+  });
+  if (best < 0) return;
+  let it = items.splice(best, 1)[0], D = ITEMS[it.id];
+  if (L.tutorial) tut.pick = true;
+  if (L.tutorial) updObj();
+  if (it.id === "backcoin") {
+    coins += 1;
+    updCoins();
+    pickupS();
+    say("\u{1FA99} +1 Backcoin (total " + coins + ")");
+    return;
+  }
+  if (WEAPONS[it.id]) {
+    weapon = it.id;
+    say(D.icon + " picked up " + D.name + " \u2014 auto-equipped");
+    pickupS();
+    updHot();
+    return;
+  }
+  if (it.id === "tape") {
+    let tp = TAPES[Math.random() * TAPES.length | 0];
+    lorePop(tp.t, tp.x);
+    try {
+      if (!tapesFound.includes(tp.t)) {
+        tapesFound.push(tp.t);
+        localStorage.setItem("br_tapes", JSON.stringify(tapesFound));
+      }
+    } catch (e) {
+    }
+    pickupS();
+    return;
+  }
+  if (inv.length >= 6) {
+    say("Hotbar full (6). Press 1-6 to use something first.");
+    items.push(it);
+    return;
+  }
+  inv.push(it.id);
+  pickupS();
+  say(D.icon + " " + D.name + " \u2014 " + D.use);
+  updHot();
+}
+function trade(t) {
+  if (!t.stock.length) {
+    say("\u{1F9D1}\u200D\u{1F4BC} " + t.name + ": sold out, wanderer.");
+    return;
+  }
+  let offer = t.stock[0];
+  if (coins < offer.price) {
+    say(`\u{1F9D1}\u200D\u{1F4BC} ${t.name}: ${ITEMS[offer.id].icon} ${ITEMS[offer.id].name} costs ${offer.price}\u{1FA99} \u2014 you have ${coins}.`);
+    return;
+  }
+  coins -= offer.price;
+  t.stock.shift();
+  updCoins();
+  pickupS();
+  if (WEAPONS[offer.id]) {
+    weapon = offer.id;
+    say(`\u{1F9D1}\u200D\u{1F4BC} ${t.name}: sold ${ITEMS[offer.id].icon} ${ITEMS[offer.id].name}! Equipped. (${coins}\u{1FA99} left)`);
+  } else if (inv.length >= 4) {
+    items.push({ id: offer.id, x: px + 20, y: py });
+    say(`\u{1F9D1}\u200D\u{1F4BC} bought ${ITEMS[offer.id].name} \u2014 hotbar full, dropped at feet.`);
+  } else {
+    inv.push(offer.id);
+    say(`\u{1F9D1}\u200D\u{1F4BC} ${t.name}: bought ${ITEMS[offer.id].icon} ${ITEMS[offer.id].name}! (${coins}\u{1FA99} left)`);
+  }
+  updHot();
+}
+function useSlot(i) {
+  if (!inv[i]) return;
+  let id = inv[i], D = ITEMS[id];
+  if (D.type === "heal") {
+    hp = Math.min(100, hp + D.heal);
+    sa = Math.min(100, sa + 20);
+    inv.splice(i, 1);
+    beep(520, 0.15);
+    say(D.icon + " used: " + D.use);
+  } else if (D.type === "stam") {
+    st = Math.min(100, st + D.heal);
+    hp = Math.min(100, hp + 10);
+    if (id === "coffee") boost = 20;
+    if (id === "adrenaline") {
+      boost = 20;
+      hp = Math.min(100, hp + 25);
+      say("\u{1F489} ADRENALINE \u2014 full sprint!");
+    }
+    inv.splice(i, 1);
+    beep(520, 0.15);
+    if (id === "coffee") say("\u2615 SPEED +20s!");
+  } else if (D.type === "ammo") {
+    bat = 100;
+    inv.splice(i, 1);
+    say("\u{1F50B} flashlight recharged");
+  } else if (D.type === "throw") {
+    inv.splice(i, 1);
+    throwItem(id);
+  } else if (D.type === "buff") {
+    if (id === "compass") say("\u{1F9ED} compass equipped \u2014 follow the arrow.");
+    else say("\u{1FA99} lucky coin is passive \u2014 keep it.");
+  } else if (D.type === "tool") {
+    say(D.icon + " " + D.name + " \u2014 passive, keep it.");
+  } else if (D.type === "weapon") {
+    weapon = id;
+    say("Equipped " + D.name);
+  } else if (D.type === "coin") {
+    coins += 1;
+    updCoins();
+    inv.splice(i, 1);
+    say("\u{1FA99} +1 Backcoin");
+  } else say(D.use);
+  if (sel >= inv.length) sel = 0;
+  updHot();
+}
+function throwItem(id) {
+  let E = nearestEnt(500);
+  if (id === "repellent") {
+    if (E) {
+      E.hp -= 50;
+      E.stun = 3;
+      burst(E.x, E.y, "\u{1F9EA}");
+      say("Repellent burns it!");
+    } else say("Threw repellent \u2014 nothing near.");
+  }
+  if (id === "radio") {
+    projs.push({ x: px, y: py, vx: fx * 300, vy: fy * 300, life: 2, lure: true });
+    say("\u{1F4FB} thrown \u2014 noise lure!");
+  }
+  hit();
+}
+function nearestEnt(r) {
+  let b = null, bd = r;
+  ents.forEach((e) => {
+    if (e.t === "guide") return;
+    let d = Math.hypot(e.x - px, e.y - py);
+    if (d < bd) {
+      bd = d;
+      b = e;
+    }
+  });
+  return b;
+}
+function attack() {
+  if (atkCd > 0) return;
+  let Wp = WEAPONS[weapon];
+  atkCd = Wp.cd;
+  burst(px + fx * 30, py + fy * 30, "\u{1F4A5}");
+  addShake(2);
+  notifyShot();
+  if (L.tutorial) tut.hit = true;
+  if (L.tutorial) updObj();
+  if (weapon === "shotgun") {
+    for (let k = -1; k <= 1; k++) {
+      let a = Math.atan2(fy, fx) + k * 0.18;
+      projs.push({ x: px, y: py, vx: Math.cos(a) * 480, vy: Math.sin(a) * 480, life: 0.6, dmg: Wp.dmg / 2 });
+    }
+    hit();
+    return;
+  }
+  if (Wp.ammo || weapon === "almond_darts") {
+    if (weapon === "nailgun") {
+      if (bat < 5) {
+        say("\u{1F50B} too low for nailgun!");
+        return;
+      }
+      bat -= 5;
+    }
+    projs.push({ x: px, y: py, vx: fx * 520, vy: fy * 520, life: 1.2, dmg: Wp.dmg });
+    hit();
+    return;
+  }
+  if (Wp.stun) {
+    ents.forEach((e) => {
+      if (Math.hypot(e.x - px, e.y - py) < Wp.range * T / 4) {
+        e.stun = Wp.stun;
+        e.hp -= Wp.dmg;
+        burst(e.x, e.y, "\u{1F4A1}");
+      }
+    });
+    hit();
+    return;
+  }
+  let E = nearestEnt(Wp.range * T / 3.2);
+  if (E) {
+    E.hp -= Wp.dmg * (ENTITIES[E.t].weak === "almond" && inv.includes("almond_water") ? 1.5 : 1);
+    burst(E.x, E.y, "\u{1FA78}");
+    addDecal(E.x, E.y, "blood");
+    addFloat(E.x, E.y, "-" + Wp.dmg, "#ff6");
+    addShake(4);
+    hit();
+    if (E.hp <= 0) {
+      burst(E.x, E.y, "\u{1F389}");
+      addDecal(E.x, E.y, "blood");
+      say("ENTITY DOWN! Exit is open \u2014 RUN!");
+      ents.splice(ents.indexOf(E), 1);
+      sting();
+    }
+  } else hit();
+}
+function burst(x, y, t) {
+  for (let i = 0; i < 8; i++) parts.push({ x, y, vx: (Math.random() - 0.5) * 200, vy: (Math.random() - 0.5) * 200, life: 0.5, t });
+}
+function updHot() {
+  let h = $("hot");
+  h.innerHTML = "";
+  inv.forEach((id, i) => {
+    let D = ITEMS[id];
+    let d = document.createElement("div");
+    d.className = "slot" + (i === sel ? " sel" : "");
+    d.innerHTML = `<b>${D.icon}</b>${D.name.split(" ")[0]}<br>${i + 1}`;
+    d.onclick = () => {
+      sel = i;
+      useSlot(i);
+    };
+    h.appendChild(d);
+  });
+  let w = document.createElement("div");
+  w.className = "slot sel";
+  w.innerHTML = `<b>${WEAPONS[weapon].icon}</b>${weapon}`;
+  w.title = WEAPONS[weapon].name;
+  h.appendChild(w);
+}
+function toggleCraft() {
+  let p = $("craftP");
+  if (!p) {
+    p = document.createElement("div");
+    p.id = "craftP";
+    p.style.cssText = "position:absolute;left:8px;bottom:140px;z-index:9;background:#000e;border:1px solid #c9a227;border-radius:10px;padding:10px;max-width:300px;font-size:12px";
+    $("app").appendChild(p);
+  }
+  if (p.style.display === "block") {
+    p.style.display = "none";
+    return;
+  }
+  p.style.display = "block";
+  p.innerHTML = "<b>\u{1F528} CRAFT (C)</b><br>" + RECIPES.map((r, i) => {
+    let ok = canCraft(inv, r);
+    return `<div style="margin:6px 0;border-top:1px solid #443;padding-top:4px">${r.name} \u2014 ${r.desc}<br><i>${Object.entries(r.need).map(([k, n]) => n + "x " + (ITEMS[k] ? ITEMS[k].name : k)).join(" + ")} \u2192 ${(ITEMS[r.gives] || WEAPONS[r.gives] || {}).name || r.gives}</i><br><button data-i="${i}" ${ok ? "" : "disabled"} style="margin-top:4px;cursor:pointer">${ok ? "CRAFT" : "need mats"}</button></div>`;
+  }).join("") + `<div style="opacity:.7">J = journal/tapes \xB7 K = kills</div>`;
+  p.querySelectorAll("button").forEach((b) => b.onclick = () => {
+    let r = RECIPES[+b.dataset.i];
+    if (!canCraft(inv, r)) return;
+    let g = doCraft(inv, r);
+    if (WEAPONS[g]) {
+      weapon = g;
+      say("\u{1F528} crafted " + WEAPONS[g].name + " \u2014 equipped!");
+    } else {
+      inv.push(g);
+      say("\u{1F528} crafted " + ITEMS[g].name + "!");
+    }
+    unlock("crafter");
+    updHot();
+    toggleCraft();
+    toggleCraft();
+    pickupS();
+  });
+}
+window.toggleCraft = toggleCraft;
+function showJournal() {
+  let p = $("craftP");
+  if (!p) {
+    toggleCraft();
+    p = $("craftP");
+  }
+  p.style.display = "block";
+  p.innerHTML = `<b>\u{1F4D3} JOURNAL (J)</b> \u2014 \u2620${kills} kills \xB7 \u{1FA99}${coins}<br><br><b>Tapes (${tapesFound.length}/${TAPES.length}):</b><br>` + (tapesFound.length ? tapesFound.map((t) => `\xB7 ${t}`).join("<br>") : "No tapes yet \u2014 grab \u{1F4FC}.") + `<br><br><b>Achievements:</b><br>` + Object.keys(ACHIEVE).map((k) => `${ach[k] ? "\u2705" : "\u{1F512}"} ${ACHIEVE[k].name} \u2014 ${ACHIEVE[k].desc}`).join("<br>") + `<br><br><button onclick="this.parentElement.style.display='none'">close</button>`;
+}
+window.showJournal = showJournal;
+function updObj() {
+  if (L.tutorial) {
+    $("objTag").textContent = `\u{1F393} ${tut.move ? "\u2705" : "\u2460"}move ${tut.pick ? "\u2705" : "\u2461"}grab ${tut.hit ? "\u2705" : "\u2462"}hit \u2192 exit`;
+    return;
+  }
+  let t = needF ? `\u25C8 fuses ${fuses}/${needF} \u2192 exit` : "\u25C8 find the glowing exit";
+  $("objTag").textContent = t + " \xB7 \u2620" + kills;
+}
+addEventListener("keydown", (e) => {
+  if (e.key >= "1" && e.key <= "6") {
+    sel = +e.key - 1;
+  }
+});
+(function stick() {
+  let s = $("stick"), n = $("nub"), on = false;
+  function p(e) {
+    let r = s.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+    let dx = t.clientX - (r.left + 55), dy = t.clientY - (r.top + 55), l = Math.hypot(dx, dy) || 1, m = Math.min(l, 40);
+    joy = { x: dx / l * (m / 40), y: dy / l * (m / 40) };
+    n.style.left = 35 + dx / l * m * 0.8 + "px";
+    n.style.top = 35 + dy / l * m * 0.8 + "px";
+  }
+  s.addEventListener("touchstart", (e) => {
+    on = true;
+    p(e);
+  }, { passive: true });
+  addEventListener("touchmove", (e) => {
+    if (on) p(e);
+  }, { passive: true });
+  addEventListener("touchend", () => {
+    on = false;
+    joy = { x: 0, y: 0 };
+    n.style.left = "35px";
+    n.style.top = "35px";
+  });
+})();
+function loop(t) {
+  requestAnimationFrame(loop);
+  let dt = Math.min(0.05, (t - lastT) / 1e3 || 0.016);
+  lastT = t;
+  if (!playing) return;
+  if (boost > 0) boost -= dt;
+  let sp = (keys["shift"] && st > 1 ? 200 : 120) * (boost > 0 ? 1.4 : 1);
+  if (keys["shift"] && st > 1) st -= 14 * dt;
+  else st = Math.min(100, st + 8 * dt);
+  let mx = (keys["d"] || keys["arrowright"] ? 1 : 0) - (keys["a"] || keys["arrowleft"] ? 1 : 0) + joy.x;
+  let my = (keys["s"] || keys["arrowdown"] ? 1 : 0) - (keys["w"] || keys["arrowup"] ? 1 : 0) + joy.y;
+  let l = Math.hypot(mx, my);
+  if (l > 1) {
+    mx /= l;
+    my /= l;
+  }
+  if (l > 0.1) {
+    let nx = mx * sp * dt, ny = my * sp * dt;
+    if (!solid(px + nx * 2 + Math.sign(nx) * 10, py)) px += nx;
+    if (!solid(px, py + ny * 2 + Math.sign(ny) * 10)) py += ny;
+    stepT += dt;
+    if (stepT > 0.32) {
+      stepT = 0;
+      step();
+      if (Math.random() < 0.6) addDecal(px, py, "step");
+    }
+    if (Math.random() < 0.02) seen.add((px / T | 0) + "," + (py / T | 0));
+  }
+  if (L.tutorial && l > 0.1 && !tut.move) {
+    tut.move = true;
+    updObj();
+  }
+  hasNV = inv.includes("nightvision");
+  let lit = lightOn || hasNV;
+  inSafe = safes.some((s) => Math.hypot(s.x - px, s.y - py) < s.r);
+  if (inSafe) {
+    hp = Math.min(100, hp + 10 * dt);
+    sa = Math.min(100, sa + 12 * dt);
+    st = Math.min(100, st + 20 * dt);
+  }
+  if (lightOn && bat > 0 && !hasNV) bat -= dt * 2;
+  if (bat <= 0) lightOn = false;
+  if (!lit && L.bright < 0.5) sa -= dt * 3;
+  sa = Math.min(100, sa + dt * (lit ? 1.2 : 0.3));
+  atkCd -= dt;
+  projs.forEach((p) => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    if (p.lure && Math.random() < 0.1) beep(300 + Math.random() * 300, 0.1, "sine", 0.04);
+    ents.forEach((e) => {
+      if (Math.hypot(e.x - p.x, e.y - p.y) < 24) {
+        if (p.dmg) {
+          e.hp -= p.dmg;
+          burst(e.x, e.y, "\u{1FA78}");
+        }
+        p.life = 0;
+      }
+    });
+  });
+  projs = projs.filter((p) => p.life > 0 && !solid(p.x, p.y));
+  parts.forEach((p) => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+  });
+  parts = parts.filter((p) => p.life > 0);
+  chasing = false;
+  for (let Ei = ents.length - 1; Ei >= 0; Ei--) {
+    let E = ents[Ei];
+    if (E.t === "guide") {
+      let a = Math.atan2(exit.y - E.y, exit.x - E.x);
+      E.x += Math.cos(a) * 50 * dt;
+      E.y += Math.sin(a) * 50 * dt;
+      if (solid(E.x, E.y)) {
+        E.x -= Math.cos(a) * 50 * dt;
+        E.y -= Math.sin(a) * 50 * dt;
+      }
+      continue;
+    }
+    if (E.stun > 0) {
+      E.stun -= dt;
+      continue;
+    }
+    if (E.t === "boss") {
+      E.spawnT -= dt;
+      if (E.spawnT <= 0 && ents.length < 5) {
+        E.spawnT = 9;
+        ents.push({ t: "party", x: E.x + 30, y: E.y, hp: ENTITIES.party.hp, max: ENTITIES.party.hp, stun: 0, wx: 0, wy: 0, wt: 0 });
+        say("\u{1F479} Mama screams \u2014 a Partygoer crawls out!");
+        sting();
+      }
+    }
+    for (let s of safes) {
+      let sd = Math.hypot(E.x - s.x, E.y - s.y);
+      if (sd < s.r + 20) {
+        let a = Math.atan2(E.y - s.y, E.x - s.x);
+        E.x += Math.cos(a) * 90 * dt;
+        E.y += Math.sin(a) * 90 * dt;
+        if (solid(E.x, E.y)) {
+          E.x -= Math.cos(a) * 90 * dt;
+          E.y -= Math.sin(a) * 90 * dt;
+        }
+      }
+    }
+    if (inSafe) continue;
+    let d = Math.hypot(E.x - px, E.y - py), Ed = ENTITIES[E.t], vis = d < 420 && (lit || d < 150);
+    let hear = d < 260 && l > 0.5 && keys["shift"];
+    if (E.t === "shadow" && !hasNV && d > 150) vis = false;
+    if (E.t === "wretch" && l < 0.15) vis = false;
+    if (E.t === "static") {
+      vis = lightOn ? d < 520 : d < 160;
+    }
+    if (E.t === "smiler" && lit && d < 200) {
+    } else if (vis || hear || p_lured(E)) {
+      let a = Math.atan2(py - E.y, px - E.x);
+      let s2 = Ed.speed * 42 * dt * (E.t === "smiler" && lit ? 0.25 : 1);
+      let ox = E.x, oy = E.y;
+      E.x += Math.cos(a) * s2;
+      E.y += Math.sin(a) * s2;
+      if (solid(E.x, E.y)) {
+        E.x = ox;
+        E.y += Math.sin(a) * s2;
+        if (solid(E.x, E.y)) {
+          E.y = oy;
+          E.x += Math.cos(a) * s2;
+        }
+      }
+      if (d < 300) chasing = true;
+    }
+    if (d < 30) {
+      let coin = inv.includes("lucky_coin") ? 0.7 : 1;
+      let jack = inv.includes("jacket") ? 0.6 : 1;
+      hp -= Ed.dmg * coin * jack * dt * 2;
+      hurt();
+      addShake(5);
+      if (Math.random() < 0.1) burst(px, py, "\u{1FA78}");
+    }
+    if (E.hp <= 0) {
+      let wasBoss = E.t === "boss";
+      ents.splice(Ei, 1);
+      kills++;
+      if (kills === 1) unlock("firstblood");
+      if (wasBoss) unlock("mama");
+      coins += wasBoss ? 10 : 2;
+      updCoins();
+      try {
+        localStorage.setItem("br_kills", kills);
+      } catch (e) {
+      }
+      for (let k = 0; k < (wasBoss ? 10 : 0); k++) items.push({ id: "backcoin", x: E.x + (Math.random() * 60 - 30), y: E.y + (Math.random() * 60 - 30) });
+      burst(E.x, E.y, "\u{1F389}");
+      addFloat(E.x, E.y, "+2\u{1FA99}", "#ffdf6b");
+      say(wasBoss ? `\u{1F479} MAMA DOWN! +10\u{1FA99} shower!` : `ENTITY DOWN \u2620 ${kills} kills, +2\u{1FA99} \u2014 exit open!`);
+      sting();
+    }
+  }
+  function p_lured(e) {
+    for (let p of projs) if (p.lure && Math.hypot(e.x - p.x, e.y - p.y) < 200) {
+      let a = Math.atan2(p.y - e.y, p.x - e.x);
+      e.x += Math.cos(a) * 60 * dt;
+      e.y += Math.sin(a) * 60 * dt;
+      return false;
+    }
+    return false;
+  }
+  if (hp <= 0) {
+    playing = false;
+    hum(false);
+    menu.style.display = "flex";
+    tabBody.innerHTML = `<div style="font-size:18px">\u2620 YOU NOCLIPPED OUT OF EXISTENCE on ${L.name}. <button class="btn" onclick="location.reload()">RETRY</button></div>`;
+    return;
+  }
+  if (Math.hypot(exit.x - px, exit.y - py) < 40) {
+    if (L.tutorial) {
+      playing = false;
+      hum(false);
+      inv = ["almond_water"];
+      weapon = "fists";
+      sel = 0;
+      coins = tutCoins;
+      updCoins();
+      updHot();
+      try {
+        localStorage.setItem("br_unlocked", Math.max(+localStorage.getItem("br_unlocked") || 0, 1));
+      } catch (e) {
+      }
+      $("playBtn").textContent = "ENTER " + LEVELS[1].name;
+      menu.style.display = "flex";
+      lvlSel.value = 1;
+      tabBody.innerHTML = `<div style="font-size:16px">\u{1F393} TRAINING COMPLETE! Practice gear recycled \u2014 nothing leaves training.<br>Next: ${LEVELS[1].name} \u2014 ${LEVELS[1].tip}</div>`;
+      beep(880, 0.3);
+      return;
+    }
+    let foes = ents.filter((e) => e.t !== "guide");
+    if (fuses >= needF && foes.length === 0 || fuses >= needF && foes.length === 0 || fuses >= needF && kills > 0) {
+      playing = false;
+      hum(false);
+      let n = (li + 1) % LEVELS.length;
+      if (n === 0 && LEVELS[0].tutorial) n = 1;
+      try {
+        localStorage.setItem("br_unlocked", Math.max(+localStorage.getItem("br_unlocked") || 0, n));
+      } catch (e) {
+      }
+      $("playBtn").textContent = "ENTER " + LEVELS[n].name;
+      menu.style.display = "flex";
+      lvlSel.value = n;
+      tabBody.innerHTML = `<div style="font-size:16px">\u2705 ESCAPED ${L.name}! \u2620${kills}<br>Next: ${LEVELS[n].name} \u2014 ${LEVELS[n].tip}</div>`;
+      beep(880, 0.3);
+      return;
+    } else if (foes.length > 0) say("Kill or lose the entity first!");
+    else say(`Need ${needF - fuses} more FUSE(S) \u{1F50C}`);
+  }
+  items.forEach((it) => {
+    if (it.id === "fuse" && Math.hypot(it.x - px, it.y - py) < 30) {
+      items.splice(items.indexOf(it), 1);
+      fuses++;
+      pickupS();
+      say(`\u{1F50C} Fuse ${fuses}/${needF}`);
+      updObj();
+    }
+  });
+  netT -= dt;
+  if (sock && netT <= 0) {
+    netT = 0.2;
+    try {
+      sock.send("p|" + myId + "|" + (px | 0) + "|" + (py | 0) + "|" + L.id);
+    } catch (e) {
+    }
+    updNetTag();
+  }
+  draw(dt);
+}
+function draw(dt) {
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+  stepFx(dt);
+  stepDecals(dt);
+  let [shx, shy] = shakeOff();
+  let cx = px - W / 2 + shx, cy = py - H / 2 + shy;
+  let x0 = Math.max(0, (cx / T | 0) - 1), x1 = Math.min(GW - 1, (cx + W) / T + 1 | 0), y0 = Math.max(0, (cy / T | 0) - 1), y1 = Math.min(GH - 1, (cy + H) / T + 1 | 0);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    let sx = x * T - cx, sy = y * T - cy;
+    if (grid[y][x]) {
+      ctx.fillStyle = "#" + L.wall.toString(16).padStart(6, "0");
+      ctx.fillRect(sx, sy, T, T);
+      drawWallD(ctx, sx, sy, x, y, T, L, grid);
+    } else {
+      ctx.fillStyle = "#" + L.floor.toString(16).padStart(6, "0");
+      ctx.fillRect(sx, sy, T, T);
+      drawFloorD(ctx, sx, sy, x, y, T, L);
+    }
+  }
+  drawDecals(ctx, cx, cy);
+  ctx.fillStyle = "#ffdf6b";
+  ctx.shadowColor = "#ffdf6b";
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.arc(exit.x - cx, exit.y - cy, 16 + Math.sin(Date.now() / 300) * 3, 0, 7);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  drawExitD(ctx, exit.x - cx, exit.y - cy, L, Date.now());
+  safes.forEach((s2) => {
+    ctx.fillStyle = "#0f08";
+    ctx.beginPath();
+    ctx.arc(s2.x - cx, s2.y - cy, s2.r, 0, 7);
+    ctx.fill();
+    ctx.strokeStyle = "#0f6";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.arc(s2.x - cx, s2.y - cy, s2.r, 0, 7);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = "15px monospace";
+    ctx.fillStyle = "#0f6";
+    ctx.fillText("\u{1F6DF} SAFE ROOM", s2.x - cx, s2.y - cy - 4);
+  });
+  ctx.font = "22px serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(255,255,255,.9)";
+  ctx.font = "20px serif";
+  items.forEach((it) => {
+    let D = ITEMS[it.id];
+    ctx.fillStyle = "rgba(0,0,0,.4)";
+    ctx.beginPath();
+    ctx.ellipse(it.x - cx, it.y - cy + 8, 10, 4, 0, 0, 7);
+    ctx.fill();
+    ctx.fillText(D.icon, it.x - cx, it.y - cy + 7 + Math.sin(Date.now() / 400 + it.x) * 2);
+  });
+  traders.forEach((t) => {
+    ctx.font = "26px serif";
+    ctx.fillText("\u{1F9D1}\u200D\u{1F4BC}", t.x - cx, t.y - cy + 8);
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "#ffe9a3";
+    let s2 = t.stock[0];
+    ctx.fillText(s2 ? `[E] ${t.name}: ${ITEMS[s2.id].icon}${s2.price}\u{1FA99}` : `${t.name}: sold out`, t.x - cx, t.y - cy - 20);
+  });
+  ctx.font = "11px monospace";
+  ctx.fillStyle = "#fff";
+  items.forEach((it) => {
+    if (Math.hypot(it.x - px, it.y - py) < 120) ctx.fillText(ITEMS[it.id].name, it.x - cx, it.y - cy - 14);
+  });
+  ents.forEach((e) => {
+    let D = ENTITIES[e.t];
+    let r = e.big ? 26 : 16;
+    ctx.fillStyle = "rgba(0,0,0,.45)";
+    ctx.beginPath();
+    ctx.ellipse(e.x - cx, e.y - cy + r * 0.7, r * 0.9, r * 0.35, 0, 0, 7);
+    ctx.fill();
+    if (e.stun > 0) {
+      ctx.fillStyle = "#9df";
+      ctx.font = "14px serif";
+      ctx.fillText("\u2736", e.x - cx + 14, e.y - cy - 14 + Math.sin(Date.now() / 150) * 3);
+    }
+    ctx.fillStyle = "#" + D.color.toString(16).padStart(6, "0");
+    ctx.beginPath();
+    ctx.arc(e.x - cx, e.y - cy, r, 0, 7);
+    ctx.fill();
+    ctx.font = e.big ? "34px serif" : "24px serif";
+    ctx.fillText(D.icon, e.x - cx, e.y - cy + 8);
+    if (chasing && Math.hypot(e.x - px, e.y - py) < 300) {
+      ctx.fillStyle = "#f33";
+      ctx.beginPath();
+      ctx.arc(e.x - cx - 8, e.y - cy - 10, 3, 0, 7);
+      ctx.arc(e.x - cx + 8, e.y - cy - 10, 3, 0, 7);
+      ctx.fill();
+    }
+    if (e.big) {
+      ctx.fillStyle = "#300";
+      ctx.fillRect(e.x - cx - 30, e.y - cy - 40, 60, 8);
+      ctx.fillStyle = "#f60";
+      ctx.fillRect(e.x - cx - 30, e.y - cy - 40, 60 * Math.max(0, e.hp / e.max), 8);
+    } else {
+      ctx.fillStyle = "#300";
+      ctx.fillRect(e.x - cx - 20, e.y - cy - 28, 40, 6);
+      ctx.fillStyle = "#e33";
+      ctx.fillRect(e.x - cx - 20, e.y - cy - 28, 40 * Math.max(0, e.hp / e.max), 6);
+    }
+  });
+  projs.forEach((p) => {
+    if (p.lure) {
+      ctx.font = "14px serif";
+      ctx.fillText("\u{1F4FB}", p.x - cx, p.y - cy + 5);
+    } else drawProjReal(ctx, p.x - cx, p.y - cy, p);
+  });
+  parts.forEach((p) => {
+    ctx.font = "14px serif";
+    ctx.fillText(p.t, p.x - cx, p.y - cy + 5);
+  });
+  drawPlayerWeapon(ctx, px - cx, py - cy, Math.atan2(fy, fx), weapon);
+  ghosts.forEach((g) => {
+    if (g.lv !== L.id) return;
+    ctx.fillStyle = "#0f6";
+    ctx.beginPath();
+    ctx.arc(g.x - cx, g.y - cy, 10, 0, 7);
+    ctx.fill();
+    ctx.font = "14px serif";
+    ctx.fillText("\u{1F9D1}\u200D\u{1F91D}\u200D\u{1F9D1}", g.x - cx, g.y - cy + 5);
+  });
+  drawFloats(ctx, cx, cy);
+  if (inv.includes("compass")) {
+    let a = Math.atan2(exit.y - py, exit.x - px);
+    ctx.font = "22px serif";
+    ctx.fillText("\u{1F9ED}", px - cx + Math.cos(a) * 44, py - cy + Math.sin(a) * 44 + 8);
+  }
+  let near = null, nd = 60;
+  items.forEach((it) => {
+    let d = Math.hypot(it.x - px, it.y - py);
+    if (d < nd) {
+      nd = d;
+      near = it;
+    }
+  });
+  if (near) {
+    ctx.font = "13px monospace";
+    ctx.fillStyle = "#ffe9a3";
+    ctx.fillText("[E] " + ITEMS[near.id].name, px - cx, py - cy - 24);
+  }
+  ctx.fillStyle = "#ffdf6b55";
+  ctx.fillRect(exit.x - cx - 3, exit.y - cy - 140, 6, 120);
+  if (hasNV) {
+    ctx.fillStyle = "rgba(0,255,80,.08)";
+    ctx.fillRect(0, 0, W, H);
+  }
+  if (!lightOn || bat <= 0) {
+    ctx.fillStyle = `rgba(0,0,10,${L.bright < 0.3 ? 0.72 : 0.45})`;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    let flick = L.id === 3 || L.id === 6 ? Math.random() < 0.04 ? 0.55 : 0.75 : 0.75;
+    let g = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, 320);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, `rgba(0,0,10,${flick})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    let a = Math.atan2(fy, fx);
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(a);
+    let cg = ctx.createLinearGradient(0, 0, 320, 0);
+    cg.addColorStop(0, "rgba(255,240,180,.14)");
+    cg.addColorStop(1, "rgba(255,240,180,0)");
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(320, -90);
+    ctx.lineTo(320, 90);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  drawMotes(ctx, W, H, Date.now() / 1e3);
+  $("vig").style.boxShadow = chasing ? "inset 0 0 160px #f00" : "inset 0 0 120px #000";
+  $("warn").style.display = chasing ? "block" : "none";
+  $("hpB").style.width = hp + "%";
+  $("stB").style.width = st + "%";
+  $("saB").style.width = sa + "%";
+  if (inSafe) $("objTag").textContent = "\u{1F6DF} SAFE \u2014 healing\u2026";
+  else updObj();
+  mapX.fillStyle = "#000";
+  mapX.fillRect(0, 0, 132, 132);
+  let s = 132 / Math.max(GW, GH);
+  safes.forEach((z) => {
+    mapX.fillStyle = "#0f6";
+    mapX.fillRect(z.x / T * s - 2, z.y / T * s - 2, 4, 4);
+  });
+  traders.forEach((t) => {
+    mapX.fillStyle = "#0ff";
+    mapX.fillRect(t.x / T * s - 2, t.y / T * s - 2, 4, 4);
+  });
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) if (!grid[y][x]) {
+    mapX.fillStyle = "#665";
+    mapX.fillRect(x * s, y * s, s, s);
+  }
+  mapX.fillStyle = "#ff0";
+  mapX.fillRect(exit.x / T * s - 2, exit.y / T * s - 2, 4, 4);
+  mapX.fillStyle = "#4af";
+  mapX.fillRect(px / T * s - 2, py / T * s - 2, 4, 4);
+  ents.forEach((e) => {
+    mapX.fillStyle = "#f00";
+    mapX.fillRect(e.x / T * s - 2, e.y / T * s - 2, 4, 4);
+  });
+  items.forEach((it) => {
+    mapX.fillStyle = "#0f0";
+    mapX.fillRect(it.x / T * s - 1, it.y / T * s - 1, 2, 2);
+  });
+}
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+$meta
+  title = BACKROOMS // Organized Survival FPS
+  description = Tutorial + 16 levels + Sandbox, 49 items, 15 weapons, vault level with every item, Mother of All Entities super-boss, keep your loot between levels, 5 hidden easter eggs. Training gear never leaves the tutorial.
+  header
+    mode = minimal
+
+createServerSocket = {import:server-plugin}
+
+generateText = {import:ai-text-plugin}
+
+backroomLevel
+  Tutorial — How To Noclip
+  Level 0 — The Lobby
+  Level 1 — Concrete Garage
+  Level 2 — Pipe Dreams
+  Level 3 — Electrical Station
+  Level 4 — Abandoned Office
+  Level 5 — Terror Hotel
+  Level 6 — Lights Out
+  Level 7 — Poolrooms
+  Level ! — Run For Your Life
+  Level 9 — Darkrooms
+  Level Fun — Party Room
+  Level 33 — Endless Metro
+  Level 94 — Motion
+  Level 37 — Sermon
+  Level 188 — Tiled Baths
+  Level ∞ — Mother's Nest
+  Sandbox
+
+backroomEntity
+  Bacteria
+  Hound
+  Smiler
+  Dullers
+  Clumps
+  Skin-Stealer
+  Partygoers
+  Mama Party
+  Death Moths
+  Facelings
+  Shadow Figure
+  Window Entity
+  The Guide
+  Wretch
+  Static Saint
+  Stalker
+  Vent Crawler
+  Wailer
+  Brute
+  Mimic
+  Lifeless
+  Screamer
+  Angler
+  Mother of All Entities
+
+backroomItem
+  Almond Water
+  Energy Bar
+  Flashlight
+  Batteries
+  Bandage
+  Lantern
+  Keycard
+  Fuse
+  VHS Tape
+  Repellent
+  Radio
+  Lucky Coin
+  Backcoins
+  Coffee
+  Medkit
+  Compass
+  Night Vision
+  Adrenaline
+  Duct Tape
+  Taped Jacket
+  Flare
+  Smoke Bomb
+  Bear Trap
+  Gas Mask
+  Molotov
+  Canned Beans
+  Hazmat Suit
+  Binoculars
+  Canteen
+  Lockpick
+  EMP Grenade
+  Glowstick
+  MRE
+  Golden Almond
+
+backroomWeapon
+  Fists
+  Crowbar
+  Machete
+  Pipe Wrench
+  Fire Axe
+  Almond Darts
+  Stun Lantern
+  Katana
+  Nailgun
+  Almond Shotgun
+  Scrap Spear
+  Crossbow
+  Assault Rifle
+  Flamethrower
+  Nail Bat
+
+$output = [backroomLevel]: a [backroomEntity] stalks you near [backroomItem]. Grab [backroomWeapon].
